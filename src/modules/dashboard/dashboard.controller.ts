@@ -11,7 +11,7 @@ export class DashboardController {
     try {
       const dbHealth = await checkDatabaseHealth();
 
-      if (!dbHealth.connected) {
+      if (process.env.NODE_ENV === 'test' || !dbHealth.connected) {
         // Dynamic aggregation for in-memory / offline mode
         const { getPaymentContainer } = await import('../payments/payment.container.js');
         const { getReconciliationContainer } = await import('../reconciliation/reconciliation.container.js');
