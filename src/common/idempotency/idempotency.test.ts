@@ -10,6 +10,7 @@ import { InMemoryPaymentRepository } from '../../modules/payments/payment.reposi
 import {
   IdempotencyService,
   InMemoryIdempotencyRepository,
+  setIdempotencyService,
   resetIdempotencyService,
 } from './idempotency.service.js';
 import { computeRequestHash } from './idempotency.types.js';
@@ -25,7 +26,7 @@ describe('Idempotency Service & Protocol (Milestone 4)', () => {
   beforeEach(async () => {
     idempotencyRepo = new InMemoryIdempotencyRepository();
     service = new IdempotencyService(idempotencyRepo);
-    resetIdempotencyService();
+    setIdempotencyService(service);
 
     const paymentRepo = new InMemoryPaymentRepository();
     await seedDemoData(paymentRepo);

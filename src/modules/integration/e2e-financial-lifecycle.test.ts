@@ -25,6 +25,7 @@ import { ReconciliationService } from '../reconciliation/reconciliation.service.
 import { ReconciliationMatcher } from '../reconciliation/reconciliation-matcher.js';
 import { setReconciliationContainer, createReconciliationContainer, resetReconciliationContainer } from '../reconciliation/reconciliation.container.js';
 import { generateHmacSignature } from '../webhooks/webhook.types.js';
+import { resetIdempotencyService } from '../../common/idempotency/idempotency.service.js';
 import { config } from '../../config/index.js';
 
 describe('Milestone 10 & 11 — Complete End-to-End Financial Lifecycle (Section 45)', () => {
@@ -49,6 +50,7 @@ describe('Milestone 10 & 11 — Complete End-to-End Financial Lifecycle (Section
     resetWebhookContainer();
     resetRiskContainer();
     resetReconciliationContainer();
+    resetIdempotencyService();
 
     // 1. Ledger
     ledgerRepo = new InMemoryLedgerRepository();

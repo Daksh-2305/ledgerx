@@ -368,6 +368,10 @@ let activeIdempotencyService: IdempotencyService | null = null;
 
 export async function getIdempotencyService(): Promise<IdempotencyService> {
   if (!activeIdempotencyService) {
+    if (process.env.NODE_ENV === 'test') {
+      activeIdempotencyService = new IdempotencyService(new InMemoryIdempotencyRepository());
+      return activeIdempotencyService;
+    }
     const dbHealth = await checkDatabaseHealth();
     let repo: IIdempotencyRepository;
     if (dbHealth.connected) {

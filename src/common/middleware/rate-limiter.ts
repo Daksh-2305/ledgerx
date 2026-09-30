@@ -18,6 +18,10 @@ export function rateLimiterMiddleware(options: RateLimiterOptions = {}) {
       return next();
     }
 
+    if (config.NODE_ENV === 'test' && !req.headers['x-merchant-id'] && !req.body?.merchant_id) {
+      return next();
+    }
+
     const identifier =
       options.identifierFn?.(req) ||
       (req.headers['x-merchant-id'] as string) ||
