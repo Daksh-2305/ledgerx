@@ -1,10 +1,8 @@
-# LedgerX — Payment Infrastructure & Financial Reconciliation Platform
+LedgerX is a payment infrastructure and financial reconciliation platform that models reliable payment processing, double-entry accounting, risk evaluation, webhook handling, and automated settlement workflows.
 
-LedgerX is a distributed, high-integrity payment processing, double-entry ledger, and automated financial reconciliation platform.
+It is designed around financial correctness and distributed-systems principles, including double-entry bookkeeping, idempotency, concurrency control, asynchronous event processing, reconciliation, and observability.
 
-Designed to meet the stringent requirements of mission-critical fintech infrastructure, LedgerX enforces **strict financial correctness**, **double-entry bookkeeping invariants**, **idempotency**, **concurrency control**, and **multi-source discrepancy detection**.
-
-> **Note**: LedgerX is an enterprise financial infrastructure operations platform and sandbox engineered for transactional accuracy, deterministic accounting, and high observability. It does not process real-world monetary transactions directly without configured banking partner integrations.
+Note: LedgerX is an infrastructure sandbox and engineering platform. It does not process real-world monetary transactions directly. Real payment processing would require integration with an external payment provider.
 
 ---
 
