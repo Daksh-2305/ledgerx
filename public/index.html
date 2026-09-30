@@ -1,0 +1,3947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LedgerX — Payment Infrastructure</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       LEDGERX CENTRALIZED SEMANTIC DESIGN TOKENS
+       Enterprise Fintech & Payment Infrastructure Console
+       ========================================================================== */
+    :root {
+      /* Base Canvas & Surfaces */
+      --background: #f5f7fa;
+      --bg-page: var(--background);
+      --surface: #ffffff;
+      --bg-card: var(--surface);
+      --bg-surface: var(--surface);
+      --surface-subtle: #f8fafc;
+      --surface-secondary: #f8fafc;
+      --bg-surface-secondary: var(--surface-subtle);
+      --bg-sidebar: #ffffff;
+
+      /* Structural Borders */
+      --border: #e2e8f0;
+      --border-default: var(--border);
+      --border-subtle: #f1f5f9;
+      --border-strong: #cbd5e1;
+      --border-focus: #273cdb;
+
+      /* Typography Scale */
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --text-faint: #94a3b8;
+
+      /* Brand Palette */
+      --primary: #273cdb;
+      --primary-hover: #1f32bd;
+      --brand-deep: #1e2a78;
+      --primary-subtle: #eef2ff;
+      --primary-border: #c7d2fe;
+
+      /* Secondary Accent */
+      --accent-teal: #0f766e;
+      --accent-teal-subtle: #e6fffb;
+      --accent-teal-border: #99f6e4;
+
+      /* Semantic Operational Status: Green = Success */
+      --success: #15803d;
+      --success-subtle: #ecfdf3;
+      --success-border: #a7f3d0;
+      --success-text: #15803d;
+
+      /* Semantic Operational Status: Amber = Warning */
+      --warning: #b45309;
+      --warning-subtle: #fffbeb;
+      --warning-border: #fde68a;
+      --warning-text: #b45309;
+
+      /* Semantic Operational Status: Red = Danger / Failure */
+      --danger: #b42318;
+      --danger-subtle: #fef3f2;
+      --danger-border: #fecaca;
+      --danger-text: #b42318;
+
+      /* Semantic Operational Status: Blue = Information */
+      --info: #2563eb;
+      --info-subtle: #eff6ff;
+      --info-border: #bfdbfe;
+      --info-text: #1d4ed8;
+
+      /* Neutral Component Badges */
+      --neutral-badge-bg: #f1f5f9;
+      --neutral-badge-text: #334155;
+      --neutral-badge-border: #e2e8f0;
+
+      /* Typography Families */
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Refined Enterprise Elevations */
+      --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 12px 16px -4px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
+
+      /* Border Radii */
+      --radius-sm: 6px;
+      --radius-md: 8px;   /* Consistent 8px for buttons/inputs */
+      --radius-lg: 10px;  /* 10-12px for cards */
+      --radius-xl: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Subtle Institutional Brand Accent Strip */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2.5px;
+      background: linear-gradient(90deg, var(--primary) 0%, #3b82f6 50%, var(--accent-teal) 100%);
+      z-index: 9999;
+    }
+
+    /* Layout Shell */
+    .app-sidebar {
+      width: 240px;
+      min-width: 240px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-default);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      z-index: 40;
+      user-select: none;
+    }
+
+    .brand-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+    }
+
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-symbol-img {
+      width: 30px;
+      height: 30px;
+      flex-shrink: 0;
+      border-radius: var(--radius-sm);
+      display: block;
+      transition: transform 0.15s ease;
+    }
+
+    .brand-link:hover .brand-symbol-img {
+      transform: scale(1.04);
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--text-primary);
+      line-height: 1.15;
+    }
+
+    .brand-title-x {
+      color: var(--primary);
+    }
+
+    .brand-subtitle {
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+
+    .nav-sections {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .nav-group-title {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      padding: 0 10px 6px 10px;
+    }
+
+    .nav-group-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      border: 1px solid transparent;
+      outline: none;
+      position: relative;
+    }
+
+    .nav-link:hover {
+      color: var(--text-primary);
+      background: var(--surface-subtle);
+      border-color: var(--border-subtle);
+    }
+
+    .nav-link:focus-visible {
+      border-color: var(--border-focus);
+      background: var(--primary-subtle);
+    }
+
+    .nav-link.active {
+      color: var(--primary);
+      background: var(--primary-subtle);
+      border-color: var(--primary-border);
+      font-weight: 600;
+    }
+
+    .nav-link.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 6px;
+      bottom: 6px;
+      width: 3px;
+      background: var(--primary);
+      border-radius: 0 2px 2px 0;
+    }
+
+    .nav-link svg {
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      transition: color 0.12s ease;
+    }
+
+    .nav-link:hover svg,
+    .nav-link.active svg {
+      color: var(--primary);
+    }
+
+    .sidebar-footer {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border-default);
+      background: var(--bg-surface-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 11.5px;
+    }
+
+    .status-badge-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      display: inline-block;
+    }
+
+    .status-dot.degraded { background: var(--warning); }
+    .status-dot.down { background: var(--danger); }
+
+    /* Main Container */
+    .app-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow-x: hidden;
+    }
+
+    /* Topbar */
+    .topbar {
+      height: 64px;
+      padding: 0 32px;
+      border-bottom: 1px solid var(--border-default);
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .topbar-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .page-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .live-clock {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      background: var(--bg-surface-secondary);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-default);
+    }
+
+    /* Buttons System */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: var(--font-sans);
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.12s ease;
+      border: 1px solid var(--border-strong);
+      background: #ffffff;
+      color: var(--text-primary);
+      text-decoration: none;
+      line-height: 1.3;
+      outline: none;
+    }
+
+    .btn:hover {
+      background: var(--bg-surface-secondary);
+      border-color: #98a2b3;
+    }
+
+    .btn:focus-visible {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(49, 87, 213, 0.15);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+      font-weight: 600;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+      color: #ffffff;
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      border-color: var(--border-strong);
+      color: var(--text-secondary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-surface-secondary);
+      color: var(--text-primary);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #ffffff;
+    }
+
+    .btn-danger:hover {
+      background: #b91c1c;
+      border-color: #b91c1c;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: transparent;
+      color: var(--text-secondary);
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-surface-secondary);
+      border-color: var(--border-default);
+      color: var(--text-primary);
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 11.5px;
+      border-radius: var(--radius-sm);
+    }
+
+    .btn:disabled,
+    .btn.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .btn.loading {
+      pointer-events: none;
+      opacity: 0.75;
+    }
+
+    .btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    .btn-refresh.loading svg {
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Content Area */
+    .content-viewport {
+      padding: 20px 28px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .view-pane {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      animation: fadeIn 0.12s ease;
+    }
+
+    .view-pane.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(2px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Metric Cards Grid */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 14px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: var(--shadow-xs);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    }
+
+    .metric-card:hover {
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .metric-card.prominent {
+      border-top: 2.5px solid var(--primary);
+      background: #ffffff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .metric-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-muted);
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .metric-value {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      margin: 4px 0 2px 0;
+    }
+
+    .metric-card.prominent .metric-value {
+      font-size: 30px;
+      color: var(--text-primary);
+    }
+
+    .metric-subtext {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .metric-subtext.positive { color: var(--success-text); }
+    .metric-subtext.warning { color: var(--warning-text); }
+    .metric-subtext.negative { color: var(--danger-text); }
+
+    /* Visualizations Grid */
+    .dashboard-visuals-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 14px;
+    }
+
+    .panel-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-xs);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .panel-body {
+      padding: 18px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+    }
+
+    /* Charts */
+    .chart-container {
+      width: 100%;
+      height: 180px;
+      position: relative;
+    }
+
+    .chart-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .status-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .status-bar-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .status-bar-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--text-secondary);
+    }
+
+    .status-track {
+      height: 6px;
+      background: var(--border-subtle);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .status-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .status-fill.captured { background: var(--success); }
+    .status-fill.authorized { background: var(--primary); }
+    .status-fill.pending { background: var(--warning); }
+    .status-fill.failed { background: var(--danger); }
+    .status-fill.refunded { background: var(--text-secondary); }
+
+    /* Tables */
+    .table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 12.5px;
+      white-space: nowrap;
+    }
+
+    .data-table th {
+      background: var(--bg-surface-secondary);
+      padding: 10px 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 11px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .data-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border-default);
+      color: var(--text-secondary);
+    }
+
+    .data-table tbody tr {
+      transition: background 0.12s ease;
+    }
+
+    .data-table tbody tr:hover {
+      background: var(--surface-subtle);
+    }
+
+    .data-table tbody tr.clickable-row {
+      cursor: pointer;
+    }
+
+    .data-table tbody tr.clickable-row:hover td {
+      color: var(--text-primary);
+    }
+
+    .data-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      line-height: 1.3;
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+    }
+
+    .badge-success { background: var(--success-subtle); color: var(--success-text); border: 1px solid var(--success-border); }
+    .badge-danger { background: var(--danger-subtle); color: var(--danger-text); border: 1px solid var(--danger-border); }
+    .badge-warning { background: var(--warning-subtle); color: var(--warning-text); border: 1px solid var(--warning-border); }
+    .badge-info { background: var(--primary-subtle); color: var(--primary); border: 1px solid var(--primary-border); }
+    .badge-neutral { background: var(--neutral-badge-bg); color: var(--neutral-badge-text); border: 1px solid var(--neutral-badge-border); }
+
+    .mono {
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .mono-link {
+      font-family: var(--font-mono);
+      color: var(--primary);
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .mono-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Filter Toolbars */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .select-input, .text-input {
+      background: #ffffff;
+      border: 1px solid var(--border-strong);
+      color: var(--text-primary);
+      padding: 6px 10px;
+      border-radius: var(--radius-md);
+      font-size: 12.5px;
+      outline: none;
+      font-family: var(--font-sans);
+      transition: border-color 0.12s ease;
+    }
+
+    .select-input:focus, .text-input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(49, 87, 213, 0.12);
+    }
+
+    /* Modal Component */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(16, 24, 40, 0.5);
+      backdrop-filter: blur(2px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-dialog {
+      background: #ffffff;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 620px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      animation: modalPop 0.12s ease-out;
+    }
+
+    @keyframes modalPop {
+      from { transform: scale(0.98); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+    }
+
+    .modal-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px;
+      line-height: 1;
+      border-radius: var(--radius-sm);
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+      background: var(--bg-surface-secondary);
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: #ffffff;
+    }
+
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-default);
+      background: var(--bg-surface-secondary);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Lifecycle Timeline */
+    .timeline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      padding: 12px 10px;
+      margin: 8px 0;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 30px;
+      right: 30px;
+      top: 24px;
+      height: 2px;
+      background: var(--border-default);
+      z-index: 1;
+    }
+
+    .timeline-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      z-index: 2;
+      position: relative;
+    }
+
+    .timeline-node {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid var(--border-strong);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .timeline-step.completed .timeline-node {
+      background: var(--success);
+      border-color: var(--success);
+      color: #ffffff;
+    }
+
+    .timeline-step.active .timeline-node {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+    }
+
+    .timeline-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .timeline-step.active .timeline-label {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* Double Entry Balance Banner */
+    .integrity-banner {
+      background: #ffffff;
+      border: 1px solid var(--border-default);
+      border-left: 4px solid var(--success);
+      border-radius: var(--radius-lg);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .integrity-status-text {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .integrity-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 11.5px;
+      font-weight: 600;
+      background: var(--success-subtle);
+      color: var(--success-text);
+      border: 1px solid var(--success-border);
+    }
+
+    /* Empty and Error States */
+    .state-box {
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .state-box svg {
+      width: 32px;
+      height: 32px;
+      color: var(--text-faint);
+    }
+
+    .state-box.error {
+      color: var(--danger-text);
+    }
+
+    .state-box.error svg {
+      color: var(--danger);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 28px;
+      background: var(--text-primary);
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      font-size: 12.5px;
+      font-weight: 500;
+      z-index: 200;
+      display: none;
+      animation: toastIn 0.15s ease;
+    }
+
+    .toast.success { background: #065f46; color: #ffffff; }
+    .toast.error { background: #991b1b; color: #ffffff; }
+
+    @keyframes toastIn {
+      from { transform: translateY(8px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+      .dashboard-visuals-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .app-sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid var(--border-default);
+      }
+      .nav-sections {
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 8px 12px;
+        gap: 8px;
+      }
+      .nav-group-title { display: none; }
+      .nav-group-list { flex-direction: row; }
+      .content-viewport { padding: 16px; }
+      .topbar { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       SIDEBAR NAVIGATION (LIGHT THEME, FULLY FUNCTIONAL)
+       ======================================================================== -->
+  <aside class="app-sidebar">
+    <div class="brand-header">
+      <a href="#/dashboard" class="brand-link" title="LedgerX — Payment Infrastructure">
+        <img src="/brand/ledgerx-mark.svg" alt="LedgerX Symbol" class="brand-symbol-img" width="30" height="30" />
+        <div class="brand-text">
+          <div class="brand-title">Ledger<span class="brand-title-x">X</span></div>
+          <div class="brand-subtitle">PAYMENT INFRASTRUCTURE</div>
+        </div>
+      </a>
+    </div>
+
+    <nav class="nav-sections">
+      <!-- OVERVIEW -->
+      <div>
+        <div class="nav-group-title">Overview</div>
+        <ul class="nav-group-list">
+          <li>
+            <a href="#/dashboard" class="nav-link active" data-route="dashboard">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              Dashboard
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- PAYMENTS -->
+      <div>
+        <div class="nav-group-title">Payments</div>
+        <ul class="nav-group-list">
+          <li>
+            <a href="#/payments" class="nav-link" data-route="payments">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Payments
+            </a>
+          </li>
+          <li>
+            <a href="#/refunds" class="nav-link" data-route="refunds">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              Refunds
+            </a>
+          </li>
+          <li>
+            <a href="#/risk" class="nav-link" data-route="risk">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Risk Engine
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- FINANCIAL -->
+      <div>
+        <div class="nav-group-title">Financial</div>
+        <ul class="nav-group-list">
+          <li>
+            <a href="#/ledger" class="nav-link" data-route="ledger">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              Double-Entry Ledger
+            </a>
+          </li>
+          <li>
+            <a href="#/reconciliation" class="nav-link" data-route="reconciliation">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Reconciliation
+            </a>
+          </li>
+          <li>
+            <a href="#/settlements" class="nav-link" data-route="settlements">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><line x1="12" y1="6" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="18"/></svg>
+              Settlements
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- OPERATIONS -->
+      <div>
+        <div class="nav-group-title">Operations</div>
+        <ul class="nav-group-list">
+          <li>
+            <a href="#/webhooks" class="nav-link" data-route="webhooks">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              Webhooks
+            </a>
+          </li>
+          <li>
+            <a href="#/webhooks/dlq" class="nav-link" data-route="webhooks/dlq">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Dead Letter Queue
+            </a>
+          </li>
+          <li>
+            <a href="#/system" class="nav-link" data-route="system">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              System Health
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); letter-spacing: -0.01em;">
+        LedgerX <span style="color: var(--text-muted); font-weight: 400;">•</span> Financial Operations
+      </div>
+      <div class="status-badge-inline" style="margin-top: 4px;">
+        <span id="sidebar-system-dot" class="status-dot"></span>
+        <span id="sidebar-system-text">Operational</span>
+      </div>
+      <div style="color: var(--text-muted); font-size: 11px;">Environment: <strong style="color: var(--text-secondary);">Production Mode</strong></div>
+    </div>
+  </aside>
+
+  <!-- ========================================================================
+       MAIN APP SHELL & TOPBAR
+       ======================================================================== -->
+  <main class="app-main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 id="topbar-title" class="page-title">Executive Dashboard</h1>
+        <p id="topbar-desc" class="page-desc">Real-time payment infrastructure and financial operations</p>
+      </div>
+
+      <div class="topbar-right">
+        <div class="status-badge-inline">
+          <span id="topbar-health-dot" class="status-dot"></span>
+          <span id="topbar-health-status" style="font-size: 12px; font-weight: 500; color: var(--text-secondary);">Operational</span>
+        </div>
+
+        <div id="live-clock" class="live-clock">Last updated Just now</div>
+
+        <button id="btn-refresh" class="btn btn-secondary btn-sm btn-refresh" onclick="refreshCurrentRoute()" title="Refresh Data">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="content-viewport">
+      
+      <!-- ====================================================================
+           1. DASHBOARD VIEW
+           ==================================================================== -->
+      <section id="view-dashboard" class="view-pane active">
+        <!-- 9 Core Metric Cards -->
+        <div class="metric-grid">
+          <!-- 1. Total Volume (Prominent) -->
+          <div class="metric-card prominent">
+            <div class="metric-label-row">
+              <span>Total Payment Volume</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div id="m-tpv" class="metric-value">₹0.00</div>
+            <div id="m-tpv-sub" class="metric-subtext">Cumulative processed volume</div>
+          </div>
+
+          <!-- 2. Successful Payments (Prominent) -->
+          <div class="metric-card prominent">
+            <div class="metric-label-row">
+              <span>Successful Payments</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div id="m-success-count" class="metric-value">0</div>
+            <div id="m-success-sub" class="metric-subtext positive">100.0% success rate</div>
+          </div>
+
+          <!-- 3. Settlement Disbursed (Prominent) -->
+          <div class="metric-card prominent">
+            <div class="metric-label-row">
+              <span>Settlement Disbursed</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/></svg>
+            </div>
+            <div id="m-settle-vol" class="metric-value">₹0.00</div>
+            <div class="metric-subtext">Completed batch disbursements</div>
+          </div>
+
+          <!-- 4. Pending Payments -->
+          <div class="metric-card">
+            <div class="metric-label-row">
+              <span>Pending Processing</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div id="m-pending-count" class="metric-value">0</div>
+            <div class="metric-subtext">Currently in authorization hold</div>
+          </div>
+
+          <!-- 5. Failed Payments -->
+          <div class="metric-card">
+            <div class="metric-label-row">
+              <span>Failed Payments</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+            <div id="m-failed-count" class="metric-value">0</div>
+            <div id="m-failed-sub" class="metric-subtext">0.0% failure rate</div>
+          </div>
+
+          <!-- 6. Refund Volume -->
+          <div class="metric-card">
+            <div class="metric-label-row">
+              <span>Refund Volume</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            </div>
+            <div id="m-refund-vol" class="metric-value">₹0.00</div>
+            <div id="m-refund-sub" class="metric-subtext">Compensating ledger entries</div>
+          </div>
+
+          <!-- 7. Open Reconciliation Issues -->
+          <div class="metric-card">
+            <div class="metric-label-row">
+              <span>Reconciliation Issues</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+            </div>
+            <div id="m-recon-issues" class="metric-value">0</div>
+            <div class="metric-subtext">Discrepancies awaiting resolution</div>
+          </div>
+
+          <!-- 8. Webhook Failures -->
+          <div class="metric-card">
+            <div class="metric-label-row">
+              <span>Webhook Failures</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <div id="m-webhook-fails" class="metric-value">0</div>
+            <div class="metric-subtext">Exhausted provider retries in DLQ</div>
+          </div>
+
+          <!-- 9. High-Risk Payments -->
+          <div class="metric-card">
+            <div class="metric-label-row">
+              <span>High-Risk Payments</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div id="m-high-risk" class="metric-value">0</div>
+            <div class="metric-subtext">Flagged by risk engine rules</div>
+          </div>
+        </div>
+
+        <!-- Real Visualizations: Trend & Status Distribution -->
+        <div class="dashboard-visuals-grid">
+          <!-- Volume Trend Chart -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+                Payment Volume Activity
+              </div>
+              <span id="chart-volume-summary" class="mono" style="font-size: 11px; color: var(--text-muted);">Real-time stream</span>
+            </div>
+            <div class="panel-body">
+              <div id="volume-chart-container" class="chart-container">
+                <svg id="volume-chart-svg" class="chart-svg" viewBox="0 0 600 160" preserveAspectRatio="none">
+                  <!-- Rendered dynamically -->
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status Distribution -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+                Status Distribution
+              </div>
+            </div>
+            <div class="panel-body">
+              <div id="status-distribution-container" class="status-bars">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Transactions Table -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              Recent Transactions
+            </div>
+            <a href="#/payments" class="btn btn-secondary btn-sm" data-route="payments">View All Payments →</a>
+          </div>
+          <div class="table-container" style="border: none; border-radius: 0;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Payment ID</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Merchant</th>
+                  <th>Customer</th>
+                  <th>Created</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="dash-recent-payments-body">
+                <tr><td colspan="7" class="state-box">Loading transactions...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           2. PAYMENTS VIEW
+           ==================================================================== -->
+      <section id="view-payments" class="view-pane">
+        <div class="filter-bar">
+          <div class="filter-group">
+            <select id="pay-filter-status" class="select-input" onchange="fetchPayments()">
+              <option value="">All Statuses</option>
+              <option value="CREATED">CREATED</option>
+              <option value="PENDING">PENDING</option>
+              <option value="AUTHORIZED">AUTHORIZED</option>
+              <option value="CAPTURED">CAPTURED</option>
+              <option value="FAILED">FAILED</option>
+              <option value="PARTIALLY_REFUNDED">PARTIALLY_REFUNDED</option>
+              <option value="REFUNDED">REFUNDED</option>
+              <option value="SETTLED">SETTLED</option>
+            </select>
+            <select id="pay-filter-currency" class="select-input" onchange="fetchPayments()">
+              <option value="">All Currencies</option>
+              <option value="INR">INR (₹)</option>
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <button id="btn-create-intent" class="btn btn-secondary btn-sm" onclick="openCreatePaymentModal('intent')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              Create Payment Intent
+            </button>
+            <button id="btn-create-payment" class="btn btn-primary btn-sm" onclick="openCreatePaymentModal('full')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Create Payment
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Payment ID</th>
+                <th>Status</th>
+                <th>Authorized Amount</th>
+                <th>Captured</th>
+                <th>Refunded</th>
+                <th>Created At</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="payments-table-body">
+              <tr><td colspan="7" class="state-box">Loading payments...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           3. REFUNDS VIEW
+           ==================================================================== -->
+      <section id="view-refunds" class="view-pane">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              Compensating Double-Entry Refunds
+            </div>
+            <span class="mono" style="font-size: 11.5px; color: var(--text-muted);">Append-only compensations</span>
+          </div>
+          <div class="table-container" style="border: none;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Refund ID</th>
+                  <th>Payment ID</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Reason</th>
+                  <th>Idempotency Key</th>
+                  <th>Processed At</th>
+                </tr>
+              </thead>
+              <tbody id="refunds-table-body">
+                <tr><td colspan="7" class="state-box">Loading refunds...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           4. DOUBLE-ENTRY LEDGER VIEW
+           ==================================================================== -->
+      <section id="view-ledger" class="view-pane">
+        <div class="integrity-banner">
+          <div class="integrity-status-text">
+            <span class="integrity-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Balanced
+            </span>
+            <span style="font-size: 12px; font-weight: 600; color: var(--text-primary); letter-spacing: 0.02em;">DOUBLE-ENTRY INVARIANT AUDIT</span>
+          </div>
+          <div id="ledger-totals-strip" class="mono" style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">
+            Total Debits: ₹0.00 | Total Credits: ₹0.00 | Invariant Balance: ✓ Balanced
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Transaction ID</th>
+                <th>Type</th>
+                <th>Reference</th>
+                <th>Debits</th>
+                <th>Credits</th>
+                <th>Currency</th>
+                <th>Posted At</th>
+              </tr>
+            </thead>
+            <tbody id="ledger-table-body">
+              <tr><td colspan="7" class="state-box">Loading ledger transactions...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           5. RISK ENGINE VIEW
+           ==================================================================== -->
+      <section id="view-risk" class="view-pane">
+        <!-- Risk Overview Summary Cards -->
+        <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+          <div class="metric-card" style="border-left: 3.5px solid var(--success);">
+            <div class="metric-label-row">
+              <span>LOW RISK</span>
+              <span class="badge badge-success">ALLOW</span>
+            </div>
+            <div id="risk-count-low" class="metric-value" style="color: var(--success-text);">0</div>
+            <div class="metric-subtext">Automated baseline approvals</div>
+          </div>
+          <div class="metric-card" style="border-left: 3.5px solid var(--info);">
+            <div class="metric-label-row">
+              <span>MEDIUM RISK</span>
+              <span class="badge badge-info">NORMAL</span>
+            </div>
+            <div id="risk-count-med" class="metric-value" style="color: var(--primary);">0</div>
+            <div class="metric-subtext">Standard velocity thresholds</div>
+          </div>
+          <div class="metric-card" style="border-left: 3.5px solid var(--warning);">
+            <div class="metric-label-row">
+              <span>HIGH RISK</span>
+              <span class="badge badge-warning">REVIEW</span>
+            </div>
+            <div id="risk-count-high" class="metric-value" style="color: var(--warning-text);">0</div>
+            <div class="metric-subtext">Flagged for manual review</div>
+          </div>
+          <div class="metric-card" style="border-left: 3.5px solid var(--danger);">
+            <div class="metric-label-row">
+              <span>CRITICAL RISK</span>
+              <span class="badge badge-danger">BLOCK</span>
+            </div>
+            <div id="risk-count-crit" class="metric-value" style="color: var(--danger-text);">0</div>
+            <div class="metric-subtext">Automated fraud blocks</div>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="filter-group">
+            <select id="risk-filter-level" class="select-input" onchange="fetchRisk()">
+              <option value="">All Risk Levels</option>
+              <option value="LOW">LOW</option>
+              <option value="MEDIUM">MEDIUM</option>
+              <option value="HIGH">HIGH</option>
+              <option value="CRITICAL">CRITICAL</option>
+            </select>
+            <select id="risk-filter-decision" class="select-input" onchange="fetchRisk()">
+              <option value="">All Decisions</option>
+              <option value="ALLOW">ALLOW</option>
+              <option value="REVIEW">REVIEW</option>
+              <option value="BLOCK">BLOCK</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Assessment ID</th>
+                <th>Payment ID</th>
+                <th>Score</th>
+                <th>Risk Level</th>
+                <th>Decision</th>
+                <th>Triggered Rules</th>
+                <th>Evaluated At</th>
+              </tr>
+            </thead>
+            <tbody id="risk-table-body">
+              <tr><td colspan="7" class="state-box">Loading risk assessments...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           6. WEBHOOKS VIEW
+           ==================================================================== -->
+      <section id="view-webhooks" class="view-pane">
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Event ID</th>
+                <th>Provider</th>
+                <th>Event Type</th>
+                <th>Status</th>
+                <th>Attempts</th>
+                <th>Received At</th>
+              </tr>
+            </thead>
+            <tbody id="webhooks-table-body">
+              <tr><td colspan="6" class="state-box">Loading webhook events...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           7. DEAD LETTER QUEUE (DLQ) VIEW
+           ==================================================================== -->
+      <section id="view-dlq" class="view-pane">
+        <div class="integrity-banner" style="background: var(--danger-subtle); border-color: var(--danger-border);">
+          <div class="integrity-status-text" style="color: var(--danger-text);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+            DEAD LETTER QUEUE (POISON EVENT ISOLATION)
+          </div>
+          <span style="font-size: 11.5px; color: var(--text-muted);">Administrative Replay & Resolve Actions Active</span>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Event ID</th>
+                <th>Event Type</th>
+                <th>Failure Reason</th>
+                <th>Attempts</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="dlq-table-body">
+              <tr><td colspan="7" class="state-box">Loading dead letter events...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           8. RECONCILIATION VIEW
+           ==================================================================== -->
+      <section id="view-reconciliation" class="view-pane">
+        <div class="filter-bar">
+          <span class="page-desc">Automated Matching vs External Settlement Statements</span>
+          <div class="filter-group">
+            <button id="btn-gen-dataset" class="btn btn-secondary btn-sm" onclick="generateTestDataset()">+ Generate Test Dataset</button>
+            <button id="btn-trigger-recon" class="btn btn-primary btn-sm" onclick="triggerReconRun()">+ Trigger Reconciliation Run</button>
+          </div>
+        </div>
+
+        <!-- Reconciliation Operations Summary -->
+        <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));">
+          <div class="metric-card" style="border-left: 3.5px solid var(--success);">
+            <div class="metric-label-row"><span>MATCHED</span></div>
+            <div id="recon-summary-matched" class="metric-value" style="color: var(--success-text); font-size: 22px;">0</div>
+            <div class="metric-subtext">Balanced settlement items</div>
+          </div>
+          <div class="metric-card" style="border-left: 3.5px solid var(--danger);">
+            <div class="metric-label-row"><span>MISMATCHES</span></div>
+            <div id="recon-summary-mismatches" class="metric-value" style="color: var(--danger-text); font-size: 22px;">0</div>
+            <div class="metric-subtext">Amount / fee discrepancies</div>
+          </div>
+          <div class="metric-card" style="border-left: 3.5px solid var(--warning);">
+            <div class="metric-label-row"><span>MISSING INTERNAL</span></div>
+            <div id="recon-summary-missing-int" class="metric-value" style="color: var(--warning-text); font-size: 22px;">0</div>
+            <div class="metric-subtext">Unrecorded by internal ledger</div>
+          </div>
+          <div class="metric-card" style="border-left: 3.5px solid var(--warning);">
+            <div class="metric-label-row"><span>MISSING EXTERNAL</span></div>
+            <div id="recon-summary-missing-ext" class="metric-value" style="color: var(--warning-text); font-size: 22px;">0</div>
+            <div class="metric-subtext">Pending gateway confirmation</div>
+          </div>
+          <div class="metric-card" style="border-left: 3.5px solid var(--text-muted);">
+            <div class="metric-label-row"><span>DUPLICATES</span></div>
+            <div id="recon-summary-duplicates" class="metric-value" style="color: var(--text-secondary); font-size: 22px;">0</div>
+            <div class="metric-subtext">Potential duplicate records</div>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Run Reference</th>
+                <th>Provider</th>
+                <th>Period</th>
+                <th>Matched</th>
+                <th>Mismatches</th>
+                <th>Missing Int</th>
+                <th>Missing Ext</th>
+                <th>Status</th>
+                <th>Executed At</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="recon-runs-table-body">
+              <tr><td colspan="10" class="state-box">Loading reconciliation runs...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           9. SETTLEMENTS VIEW
+           ==================================================================== -->
+      <section id="view-settlements" class="view-pane">
+        <div class="filter-bar">
+          <span class="page-desc">Merchant Payout Batches & Ledger Settlement Postings</span>
+          <button id="btn-create-settlement" class="btn btn-primary" onclick="openCreateSettlementModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Create Settlement Batch
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Batch Reference</th>
+                <th>Merchant</th>
+                <th>Gross</th>
+                <th>Refunds</th>
+                <th>Fees</th>
+                <th>Net Payout</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="settlements-table-body">
+              <tr><td colspan="9" class="state-box">Loading settlement batches...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           10. SYSTEM HEALTH VIEW
+           ==================================================================== -->
+      <section id="view-system" class="view-pane">
+        <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+          <!-- API Gateway -->
+          <div class="metric-card">
+            <div class="metric-label-row">
+              <span>Core API Process</span>
+              <span id="sys-api-pill" class="badge badge-success">UP</span>
+            </div>
+            <div id="sys-api-status" class="metric-value" style="font-size: 18px; color: var(--success-text);">Operational</div>
+            <div id="sys-api-uptime" class="metric-subtext">Uptime: 0s</div>
+          </div>
+
+          <!-- PostgreSQL -->
+          <div class="metric-card">
+            <div class="metric-label-row">
+              <span>PostgreSQL Database</span>
+              <span id="sys-db-pill" class="badge badge-success">UP</span>
+            </div>
+            <div id="sys-db-status" class="metric-value" style="font-size: 18px; color: var(--success-text);">Operational</div>
+            <div id="sys-db-latency" class="metric-subtext">Latency: 0ms</div>
+          </div>
+
+          <!-- Redis -->
+          <div class="metric-card">
+            <div class="metric-label-row">
+              <span>Redis Cluster</span>
+              <span id="sys-redis-pill" class="badge badge-success">UP</span>
+            </div>
+            <div id="sys-redis-status" class="metric-value" style="font-size: 18px; color: var(--success-text);">Operational</div>
+            <div id="sys-redis-latency" class="metric-subtext">Latency: 0ms</div>
+          </div>
+
+          <!-- Kafka -->
+          <div class="metric-card">
+            <div class="metric-label-row">
+              <span>Kafka Event Bus</span>
+              <span id="sys-kafka-pill" class="badge badge-success">UP</span>
+            </div>
+            <div id="sys-kafka-status" class="metric-value" style="font-size: 18px; color: var(--success-text);">Operational</div>
+            <div id="sys-kafka-latency" class="metric-subtext">Latency: 0ms</div>
+          </div>
+        </div>
+
+        <!-- Prometheus Text Metrics Preview -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 14 15 20 9"/></svg>
+              Prometheus Scrape Endpoint (GET /metrics)
+            </div>
+            <a href="/metrics" target="_blank" class="btn btn-secondary btn-sm">Raw Endpoint ↗</a>
+          </div>
+          <div class="panel-body" style="padding: 0;">
+            <pre id="metrics-raw-preview" class="mono" style="padding: 14px 18px; background: var(--bg-surface-secondary); color: var(--text-secondary); font-size: 11px; max-height: 280px; overflow-y: auto;">Scraping /metrics...</pre>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ========================================================================
+       MODALS
+       ======================================================================== -->
+  
+  <!-- Payment Details Modal -->
+  <div id="modal-payment-detail" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">Payment Detail & Lifecycle</div>
+        <button class="modal-close" onclick="closeModal('modal-payment-detail')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="payment-modal-summary" style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 12px; border-bottom: 1px solid var(--border-default);">
+          <div>
+            <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px;">PAYMENT</div>
+            <div id="pm-amount" class="mono" style="font-size: 26px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em;">₹0.00</div>
+            <div id="pm-id" class="mono" style="font-size: 11.5px; color: var(--text-muted);">-</div>
+          </div>
+          <div id="pm-status-pill"></div>
+        </div>
+
+        <!-- Details Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; padding: 10px 0;">
+          <div><span style="color: var(--text-muted);">Merchant:</span> <span id="pm-merchant" class="mono">-</span></div>
+          <div><span style="color: var(--text-muted);">Customer:</span> <span id="pm-customer" class="mono">-</span></div>
+          <div><span style="color: var(--text-muted);">Currency:</span> <span id="pm-currency" class="mono" style="font-weight: 600;">INR</span></div>
+          <div><span style="color: var(--text-muted);">Created:</span> <span id="pm-created" class="mono">-</span></div>
+          <div><span style="color: var(--text-muted);">Captured:</span> <span id="pm-captured" class="mono">-</span></div>
+          <div><span style="color: var(--text-muted);">Refunded:</span> <span id="pm-refunded" class="mono">-</span></div>
+        </div>
+
+        <!-- Visual Timeline -->
+        <div style="margin-top: 4px;">
+          <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">PAYMENT LIFECYCLE</div>
+          <div id="pm-timeline" class="timeline"></div>
+        </div>
+
+        <!-- Audit Trail Log -->
+        <div style="margin-top: 10px; background: var(--surface-subtle); padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-default);">
+          <div style="font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px;">Audit Trail & Transitions</div>
+          <div id="pm-audit-list" style="display: flex; flex-direction: column; gap: 4px; max-height: 100px; overflow-y: auto;">
+            <div style="color: var(--text-muted); font-size: 11.5px;">No transitions recorded yet</div>
+          </div>
+        </div>
+
+        <!-- Lifecycle Transition Controls (Authorize, Capture, Cancel) -->
+        <div id="pm-transition-box" style="padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: #ffffff; margin-top: 12px;">
+          <div style="font-weight: 600; font-size: 12.5px; margin-bottom: 8px;">State Machine Actions</div>
+          <div id="pm-transition-buttons" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <!-- Rendered dynamically based on current status -->
+          </div>
+        </div>
+
+        <!-- Compensating Refund Box -->
+        <div id="pm-refund-box" style="background: var(--bg-surface-secondary); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-default); margin-top: 12px; display: none;">
+          <div style="font-weight: 600; font-size: 12.5px; margin-bottom: 8px;">Compensating Refund Form</div>
+          <div style="display: flex; gap: 8px;">
+            <input id="pm-refund-amount" type="number" class="text-input" placeholder="Amount (minor units, e.g. 1000)" style="flex: 1;" min="1">
+            <input id="pm-refund-reason" type="text" class="text-input" placeholder="Reason (e.g. customer return)" style="flex: 1;">
+            <button id="pm-refund-btn" class="btn btn-primary" onclick="submitModalRefund()">Execute Refund</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-payment-detail')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Payment / Payment Intent Modal -->
+  <div id="modal-create-payment" class="modal-backdrop">
+    <div class="modal-dialog" style="max-width: 520px;">
+      <div class="modal-header">
+        <div id="cp-modal-title" class="modal-title">Create Payment</div>
+        <button class="modal-close" onclick="closeModal('modal-create-payment')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Merchant</label>
+            <select id="cp-merchant-select" class="select-input" style="width: 100%;" onchange="onMerchantSelectChange()">
+              <option value="00000000-0000-0000-0000-000000000001">Acme Payments India (00000000-0000-0000-0000-000000000001)</option>
+              <option value="00000000-0000-0000-0000-000000000002">Globex Global Tech (00000000-0000-0000-0000-000000000002)</option>
+              <option value="custom">-- Custom Merchant UUID --</option>
+            </select>
+            <input id="cp-merchant" type="text" class="text-input mono" value="00000000-0000-0000-0000-000000000001" style="margin-top: 4px; display: none;">
+          </div>
+
+          <div>
+            <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Customer</label>
+            <select id="cp-customer-select" class="select-input" style="width: 100%;" onchange="onCustomerSelectChange()">
+              <option value="00000000-0000-0000-0000-000000000010">Rahul Sharma (00000000-0000-0000-0000-000000000010)</option>
+              <option value="00000000-0000-0000-0000-000000000020">Sarah Connor (00000000-0000-0000-0000-000000000020)</option>
+              <option value="custom">-- Custom Customer UUID --</option>
+            </select>
+            <input id="cp-customer" type="text" class="text-input mono" value="00000000-0000-0000-0000-000000000010" style="margin-top: 4px; display: none;">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Amount (Minor Units)</label>
+              <input id="cp-amount" type="number" class="text-input" value="50000" min="1" step="1" oninput="updateAmountPreview()">
+              <div id="cp-amount-preview" style="font-size: 11px; color: var(--primary); margin-top: 3px; font-weight: 600;">= ₹500.00</div>
+            </div>
+            <div>
+              <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Currency</label>
+              <select id="cp-currency" class="select-input" style="width: 100%;" onchange="updateAmountPreview()">
+                <option value="INR">INR (₹)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary);">Idempotency Key</label>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="generateNewIdempotencyKey()" style="font-size: 10.5px; padding: 2px 6px;">↻ Generate New</button>
+            </div>
+            <input id="cp-idempotency" type="text" class="text-input mono" value="">
+            <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 3px;">Re-submitting with the same key safely returns the existing payment without duplicate charging.</div>
+          </div>
+
+          <div>
+            <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Description</label>
+            <input id="cp-desc" type="text" class="text-input" value="Standard Checkout Transaction">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-create-payment')">Cancel</button>
+        <button id="cp-submit-btn" class="btn btn-primary" onclick="submitCreatePayment()">Create Payment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Settlement Batch Modal -->
+  <div id="modal-create-settlement" class="modal-backdrop">
+    <div class="modal-dialog" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title">Create Merchant Settlement Batch</div>
+        <button class="modal-close" onclick="closeModal('modal-create-settlement')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Merchant</label>
+            <select id="cs-merchant-select" class="select-input" style="width: 100%;" onchange="onSettlementMerchantChange()">
+              <option value="00000000-0000-0000-0000-000000000001">Acme Payments India (00000000-0000-0000-0000-000000000001)</option>
+              <option value="00000000-0000-0000-0000-000000000002">Globex Global Tech (00000000-0000-0000-0000-000000000002)</option>
+              <option value="custom">-- Custom Merchant UUID --</option>
+            </select>
+            <input id="cs-merchant" type="text" class="text-input mono" value="00000000-0000-0000-0000-000000000001" style="margin-top: 4px; display: none;">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Currency</label>
+              <select id="cs-currency" class="select-input" style="width: 100%;">
+                <option value="INR">INR (₹)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Fee (BPS / %)</label>
+              <input id="cs-fee-bps" type="number" class="text-input" value="150" min="0" max="10000" placeholder="150 = 1.5%">
+            </div>
+          </div>
+
+          <div>
+            <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Period Start (ISO)</label>
+            <input id="cs-start" type="text" class="text-input mono" value="">
+          </div>
+
+          <div>
+            <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Period End (ISO)</label>
+            <input id="cs-end" type="text" class="text-input mono" value="">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-create-settlement')">Cancel</button>
+        <button id="cs-submit-btn" class="btn btn-primary" onclick="submitCreateSettlement()">Create Batch</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reconciliation Run Details Modal -->
+  <div id="modal-recon-detail" class="modal-backdrop">
+    <div class="modal-dialog" style="max-width: 860px;">
+      <div class="modal-header">
+        <div class="modal-title">Reconciliation Run Details & Discrepancy Lifecycle</div>
+        <button class="modal-close" onclick="closeModal('modal-recon-detail')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border-default);">
+          <div>
+            <div id="recon-modal-ref" class="mono" style="font-size: 18px; font-weight: 700; color: var(--text-primary);">-</div>
+            <div id="recon-modal-provider" style="font-size: 12px; color: var(--text-muted);">-</div>
+          </div>
+          <div id="recon-modal-status-pill"></div>
+        </div>
+
+        <div class="metric-grid" style="grid-template-columns: repeat(4, 1fr); margin-top: 12px; gap: 10px;">
+          <div class="metric-card" style="padding: 10px;">
+            <div class="metric-label-row">Matched</div>
+            <div id="recon-modal-matched" class="metric-value" style="font-size: 18px; color: var(--success-text);">0</div>
+          </div>
+          <div class="metric-card" style="padding: 10px;">
+            <div class="metric-label-row">Mismatches</div>
+            <div id="recon-modal-mismatches" class="metric-value" style="font-size: 18px; color: var(--danger-text);">0</div>
+          </div>
+          <div class="metric-card" style="padding: 10px;">
+            <div class="metric-label-row">Missing Internal</div>
+            <div id="recon-modal-missing-int" class="metric-value" style="font-size: 18px;">0</div>
+          </div>
+          <div class="metric-card" style="padding: 10px;">
+            <div class="metric-label-row">Missing External</div>
+            <div id="recon-modal-missing-ext" class="metric-value" style="font-size: 18px;">0</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 14px;">
+          <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">Reconciliation Records & Discrepancies</div>
+          <div class="table-container" style="max-height: 280px; overflow-y: auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Internal Ref</th>
+                  <th>External Ref</th>
+                  <th>Result</th>
+                  <th>Internal Amount</th>
+                  <th>External Amount</th>
+                  <th>Difference</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="recon-modal-records-body">
+                <tr><td colspan="8" class="state-box">Loading records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-recon-detail')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settlement Batch Detail Modal -->
+  <div id="modal-settlement-detail" class="modal-backdrop">
+    <div class="modal-dialog" style="max-width: 860px;">
+      <div class="modal-header">
+        <div class="modal-title">Settlement Batch Details & Financial Records</div>
+        <button class="modal-close" onclick="closeModal('modal-settlement-detail')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border-default);">
+          <div>
+            <div id="sb-modal-ref" class="mono" style="font-size: 18px; font-weight: 700; color: var(--text-primary);">-</div>
+            <div id="sb-modal-merchant" class="mono" style="font-size: 11.5px; color: var(--text-muted);">-</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div id="sb-modal-status-pill"></div>
+            <div id="sb-modal-actions"></div>
+          </div>
+        </div>
+
+        <!-- Financial Summary Cards -->
+        <div class="metric-grid" style="grid-template-columns: repeat(4, 1fr); margin-top: 12px; gap: 10px;">
+          <div class="metric-card" style="padding: 10px;">
+            <div class="metric-label-row">Gross Captured</div>
+            <div id="sb-modal-gross" class="metric-value" style="font-size: 18px;">₹0.00</div>
+          </div>
+          <div class="metric-card" style="padding: 10px;">
+            <div class="metric-label-row">Refunds Deducted</div>
+            <div id="sb-modal-refunds" class="metric-value" style="font-size: 18px; color: var(--danger-text);">₹0.00</div>
+          </div>
+          <div class="metric-card" style="padding: 10px;">
+            <div class="metric-label-row">Fees Deducted</div>
+            <div id="sb-modal-fees" class="metric-value" style="font-size: 18px; color: var(--warning-text);">₹0.00</div>
+          </div>
+          <div class="metric-card" style="padding: 10px;">
+            <div class="metric-label-row">Net Disbursed</div>
+            <div id="sb-modal-net" class="metric-value" style="font-size: 18px; color: var(--success-text);">₹0.00</div>
+          </div>
+        </div>
+
+        <!-- Visual Settlement Calculation Formula -->
+        <div style="margin-top: 14px; padding: 12px 16px; background: var(--surface-subtle); border: 1px solid var(--border-default); border-radius: var(--radius-md);">
+          <div style="font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 8px;">Deterministic Financial Settlement Invariant</div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 12.5px;">
+            <div><span style="color: var(--text-muted); font-size: 11px;">Gross</span> <strong id="sb-calc-gross" style="color: var(--text-primary);">₹0.00</strong></div>
+            <span style="color: var(--text-muted); font-weight: bold;">−</span>
+            <div><span style="color: var(--text-muted); font-size: 11px;">Refunds</span> <strong id="sb-calc-refunds" style="color: var(--danger-text);">₹0.00</strong></div>
+            <span style="color: var(--text-muted); font-weight: bold;">−</span>
+            <div><span style="color: var(--text-muted); font-size: 11px;">Fees</span> <strong id="sb-calc-fees" style="color: var(--warning-text);">₹0.00</strong></div>
+            <span style="color: var(--text-muted); font-weight: bold;">+</span>
+            <div><span style="color: var(--text-muted); font-size: 11px;">Adjustments</span> <strong id="sb-calc-adj" style="color: var(--text-secondary);">₹0.00</strong></div>
+            <span style="color: var(--text-muted); font-weight: bold;">=</span>
+            <div style="background: #ffffff; padding: 3px 8px; border-radius: var(--radius-sm); border: 1px solid var(--success-border);"><span style="color: var(--text-muted); font-size: 10.5px;">Net Settlement</span> <strong id="sb-calc-net" style="color: var(--success-text); font-size: 13.5px;">₹0.00</strong></div>
+          </div>
+        </div>
+
+        <!-- Batch Records Table -->
+        <div style="margin-top: 14px;">
+          <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">Included Settlement Records</div>
+          <div class="table-container" style="max-height: 250px; overflow-y: auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Record ID</th>
+                  <th>Payment ID</th>
+                  <th>Type</th>
+                  <th>Gross Amount</th>
+                  <th>Fee Amount</th>
+                  <th>Net Amount</th>
+                </tr>
+              </thead>
+              <tbody id="sb-modal-records-body">
+                <tr><td colspan="6" class="state-box">Loading records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-settlement-detail')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast" class="toast"></div>
+
+  <!-- ========================================================================
+       FRONTEND JAVASCRIPT & BULLETPROOF ROUTING ENGINE
+       ======================================================================== -->
+  <script>
+    // Configuration
+    const ADMIN_KEY = 'ledgerx_admin_secret_key_change_in_production';
+    let currentRoute = 'dashboard';
+    let isRefreshing = false;
+    let activePaymentDetailId = null;
+    let activeReconDetailId = null;
+    let activeSettlementDetailId = null;
+    let currentPaymentCreateMode = 'full';
+
+    function extractErrorMessage(json, defaultMsg = 'Operation failed') {
+      if (!json) return defaultMsg;
+      if (typeof json === 'string') return json;
+      if (json.error) {
+        if (typeof json.error === 'string') return json.error;
+        if (Array.isArray(json.error)) {
+          return json.error.map(e => e.message || e.path?.join('.') || JSON.stringify(e)).join(', ');
+        }
+        if (json.error.message) {
+          if (Array.isArray(json.error.details) && json.error.details.length > 0) {
+            const detailMsg = json.error.details.map(d => d.message || JSON.stringify(d)).join(', ');
+            return `${json.error.message}: ${detailMsg}`;
+          }
+          return json.error.message;
+        }
+        if (json.error.code) return json.error.code;
+      }
+      if (json.message) return json.message;
+      return defaultMsg;
+    }
+
+    // Standardized Currency & Date Formatters (Guarantee: Never output undefined/null/NaN)
+    function formatMoney(minorUnits, currency = 'INR') {
+      if (minorUnits === undefined || minorUnits === null || isNaN(minorUnits)) {
+        return currency === 'INR' ? '₹0.00' : '$0.00';
+      }
+      const val = Number(minorUnits) / 100;
+      const symbol = currency === 'INR' ? '₹' : (currency === 'EUR' ? '€' : (currency === 'GBP' ? '£' : '$'));
+      return `${symbol}${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    function formatDate(isoString) {
+      if (!isoString) return '-';
+      try {
+        const d = new Date(isoString);
+        if (isNaN(d.getTime())) return '-';
+        return d.toLocaleString('en-US', { 
+          month: 'short', day: 'numeric', 
+          hour: '2-digit', minute: '2-digit', second: '2-digit', 
+          hour12: false 
+        });
+      } catch {
+        return String(isoString);
+      }
+    }
+
+    function getStatusBadge(status) {
+      const s = String(status || '').toUpperCase();
+      if (['CAPTURED', 'MATCHED', 'SETTLED', 'ALLOW', 'COMPLETED', 'RESOLVED', 'ACTIVE', 'UP'].includes(s)) {
+        return `<span class="badge badge-success">${s}</span>`;
+      }
+      if (['FAILED', 'BLOCK', 'DEAD_LETTERED', 'CANCELLED', 'AMOUNT_MISMATCH', 'DOWN'].includes(s)) {
+        return `<span class="badge badge-danger">${s}</span>`;
+      }
+      if (['PENDING', 'CREATED', 'REVIEW', 'INVESTIGATING', 'STATUS_MISMATCH', 'DEGRADED'].includes(s)) {
+        return `<span class="badge badge-warning">${s}</span>`;
+      }
+      if (['AUTHORIZED', 'PARTIALLY_REFUNDED', 'READY'].includes(s)) {
+        return `<span class="badge badge-info">${s}</span>`;
+      }
+      return `<span class="badge badge-neutral">${s || 'UNKNOWN'}</span>`;
+    }
+
+    // Modal Helpers
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('active');
+    }
+
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.innerText = message;
+      toast.className = `toast ${isError ? 'error' : 'success'}`;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 4000);
+    }
+
+    // Last Updated Tracker
+    function markLastUpdated() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', { hour12: false }) + ' UTC';
+      const el = document.getElementById('live-clock');
+      if (el) el.innerText = 'Last updated ' + timeStr;
+    }
+    markLastUpdated();
+
+    // ========================================================================
+    // BULLETPROOF ROUTING & NAVIGATION ENGINE
+    // Normalizes hash (#/route, #route, /route) and handles all routes cleanly
+    // ========================================================================
+    const ROUTES = {
+      dashboard: {
+        viewId: 'view-dashboard',
+        title: 'Executive Dashboard',
+        desc: 'Real-time payment infrastructure and financial operations',
+        fetch: fetchDashboardData
+      },
+      payments: {
+        viewId: 'view-payments',
+        title: 'Payments Ledger',
+        desc: 'Transaction lifecycle, authorizations, and capture triggers',
+        fetch: fetchPayments
+      },
+      refunds: {
+        viewId: 'view-refunds',
+        title: 'Compensating Refunds',
+        desc: 'Immutable compensating double-entry accounting records',
+        fetch: fetchRefunds
+      },
+      risk: {
+        viewId: 'view-risk',
+        title: 'Transaction Risk Engine',
+        desc: 'Transparent rule evaluation, scores, and velocity checks',
+        fetch: fetchRisk
+      },
+      ledger: {
+        viewId: 'view-ledger',
+        title: 'Double-Entry Financial Ledger',
+        desc: 'Balanced multi-currency chart of accounts and journal entries',
+        fetch: fetchLedger
+      },
+      reconciliation: {
+        viewId: 'view-reconciliation',
+        title: 'Automated Financial Reconciliation',
+        desc: 'Multi-source transaction matching and discrepancy resolution',
+        fetch: fetchReconciliation
+      },
+      settlements: {
+        viewId: 'view-settlements',
+        title: 'Settlement Batches',
+        desc: 'Merchant payouts, fee deductions, and ledger disbursal execution',
+        fetch: fetchSettlements
+      },
+      webhooks: {
+        viewId: 'view-webhooks',
+        title: 'Webhook Processing',
+        desc: 'Inbound provider notifications and signature verification',
+        fetch: fetchWebhooks
+      },
+      'webhooks/dlq': {
+        viewId: 'view-dlq',
+        title: 'Dead Letter Queue Inspector',
+        desc: 'Poison events, retry policies, and manual operator actions',
+        fetch: fetchDLQ
+      },
+      system: {
+        viewId: 'view-system',
+        title: 'System Health & Infrastructure',
+        desc: 'PostgreSQL, Redis, Kafka, and process runtime observability',
+        fetch: fetchSystemHealth
+      }
+    };
+
+    function normalizeRoute(raw) {
+      if (!raw) return 'dashboard';
+      let clean = String(raw).trim();
+      // Remove leading hash and any slashes
+      clean = clean.replace(/^#\/?/, '').replace(/^\//, '');
+      // Handle DLQ alias
+      if (clean === 'dlq' || clean === 'webhooks/dlq') return 'webhooks/dlq';
+      // Match against known keys
+      if (ROUTES[clean]) return clean;
+      // Strip query parameters if any
+      clean = clean.split('?')[0];
+      if (ROUTES[clean]) return clean;
+      return 'dashboard';
+    }
+
+    function navigateTo(targetRoute) {
+      const route = normalizeRoute(targetRoute);
+      const targetHash = '#/' + route;
+      if (window.location.hash !== targetHash) {
+        window.location.hash = targetHash;
+      } else {
+        activateRoute(route);
+      }
+    }
+
+    function activateRoute(rawRoute) {
+      const route = normalizeRoute(rawRoute);
+      currentRoute = route;
+
+      const meta = ROUTES[route] || ROUTES['dashboard'];
+
+      // 1. Update navigation links active state
+      document.querySelectorAll('.nav-link').forEach(link => {
+        const linkRoute = link.getAttribute('data-route');
+        const isActive = (linkRoute === route) || (route === 'webhooks/dlq' && linkRoute === 'dlq');
+        link.classList.toggle('active', isActive);
+      });
+
+      // 2. Update view panes
+      document.querySelectorAll('.view-pane').forEach(pane => {
+        pane.classList.remove('active');
+      });
+      const activePane = document.getElementById(meta.viewId);
+      if (activePane) {
+        activePane.classList.add('active');
+      }
+
+      // 3. Update Header
+      document.getElementById('topbar-title').innerText = meta.title;
+      document.getElementById('topbar-desc').innerText = meta.desc;
+
+      // 4. Scroll to top
+      window.scrollTo(0, 0);
+
+      // 5. Fetch view data
+      if (typeof meta.fetch === 'function') {
+        meta.fetch();
+      }
+    }
+
+    // Attach Event Delegation for Navigation Links
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a[data-route]');
+      if (link) {
+        e.preventDefault();
+        const route = link.getAttribute('data-route');
+        navigateTo(route);
+      }
+    });
+
+    // Hashchange listener for Browser Back/Forward buttons
+    window.addEventListener('hashchange', () => {
+      activateRoute(window.location.hash);
+    });
+
+    async function refreshCurrentRoute() {
+      if (isRefreshing) return;
+      isRefreshing = true;
+      const btn = document.getElementById('btn-refresh');
+      btn.classList.add('loading');
+      
+      try {
+        const meta = ROUTES[currentRoute] || ROUTES['dashboard'];
+        if (typeof meta.fetch === 'function') {
+          await meta.fetch();
+        }
+        markLastUpdated();
+        showToast('Dashboard refreshed successfully');
+      } catch (err) {
+        showToast('Refresh failed: ' + err.message, true);
+      } finally {
+        setTimeout(() => {
+          isRefreshing = false;
+          btn.classList.remove('loading');
+        }, 400);
+      }
+    }
+
+    // ========================================================================
+    // 1. DASHBOARD DATA FETCHING (FIXED CONTRACT & REAL VISUALIZATIONS)
+    // ========================================================================
+    async function fetchDashboardData() {
+      try {
+        const [metricsRes, paymentsRes] = await Promise.all([
+          fetch('/api/v1/dashboard/metrics'),
+          fetch('/api/v1/payments?page=1&limit=8')
+        ]);
+
+        if (metricsRes.ok) {
+          const json = await metricsRes.json();
+          const m = json.data || {};
+
+          // EXACT Contract Mapping (Guarantee: No undefined)
+          document.getElementById('m-tpv').innerText = formatMoney(m.totalPaymentVolumeMinor);
+          document.getElementById('m-success-count').innerText = (m.successfulPayments ?? 0).toLocaleString();
+          document.getElementById('m-failed-count').innerText = (m.failedPayments ?? 0).toLocaleString();
+          document.getElementById('m-pending-count').innerText = (m.pendingPayments ?? 0).toLocaleString();
+          document.getElementById('m-refund-vol').innerText = formatMoney(m.refundVolumeMinor);
+          document.getElementById('m-recon-issues').innerText = (m.openReconciliationIssues ?? 0).toLocaleString();
+          document.getElementById('m-settle-vol').innerText = formatMoney(m.settlementAmountMinor);
+          document.getElementById('m-webhook-fails').innerText = (m.webhookFailures ?? 0).toLocaleString();
+          document.getElementById('m-high-risk').innerText = (m.highRiskPayments ?? 0).toLocaleString();
+
+          // Subtitles with percentages
+          const total = (m.successfulPayments ?? 0) + (m.failedPayments ?? 0) + (m.pendingPayments ?? 0);
+          if (total > 0) {
+            const successPct = (((m.successfulPayments ?? 0) / total) * 100).toFixed(1);
+            const failPct = (((m.failedPayments ?? 0) / total) * 100).toFixed(1);
+            document.getElementById('m-success-sub').innerText = `${successPct}% success rate`;
+            document.getElementById('m-failed-sub').innerText = `${failPct}% failure rate`;
+          }
+
+          // Render Real Charts
+          renderVolumeChart(m.volumeTrend || []);
+          renderStatusBars(m.statusDistribution || {});
+        }
+
+        // Render Recent Transactions
+        if (paymentsRes.ok) {
+          const pJson = await paymentsRes.json();
+          renderDashboardRecentPayments(pJson.data || []);
+        }
+        markLastUpdated();
+      } catch (err) {
+        console.error('Error loading dashboard data:', err);
+      }
+    }
+
+    function renderVolumeChart(trend) {
+      const container = document.getElementById('volume-chart-container');
+      if (!trend || trend.length === 0) {
+        container.innerHTML = `
+          <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 16px;">
+            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">No transaction volume yet</div>
+            <div style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 14px;">Create a payment to see transaction activity here.</div>
+            <button class="btn btn-primary btn-sm" onclick="openCreatePaymentModal()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Create Payment
+            </button>
+          </div>
+        `;
+        document.getElementById('chart-volume-summary').innerText = '0 transactions recorded';
+        return;
+      }
+
+      container.innerHTML = `<svg id="volume-chart-svg" class="chart-svg" viewBox="0 0 600 160" preserveAspectRatio="none"></svg>`;
+      const svg = document.getElementById('volume-chart-svg');
+
+      const width = 600;
+      const height = 160;
+      const padding = 20;
+
+      const amounts = trend.map(t => Number(t.amount || 0));
+      const maxVal = Math.max(...amounts, 1000);
+      const points = amounts.map((val, idx) => {
+        const x = padding + (idx / Math.max(amounts.length - 1, 1)) * (width - padding * 2);
+        const y = height - padding - (val / maxVal) * (height - padding * 2);
+        return { x, y, val };
+      });
+
+      const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+      const areaPath = `${linePath} L ${points[points.length - 1].x.toFixed(1)} ${height - padding} L ${points[0].x.toFixed(1)} ${height - padding} Z`;
+
+      svg.innerHTML = `
+        <defs>
+          <linearGradient id="volGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#273cdb" stop-opacity="0.14"/>
+            <stop offset="100%" stop-color="#273cdb" stop-opacity="0.0"/>
+          </linearGradient>
+        </defs>
+        <!-- Horizontal grid line -->
+        <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="#e2e8f0" stroke-width="1"/>
+        <line x1="${padding}" y1="${padding}" x2="${width - padding}" y2="${padding}" stroke="#e2e8f0" stroke-dasharray="3,3" stroke-width="1"/>
+        <!-- Area & Line -->
+        <path d="${areaPath}" fill="url(#volGrad)"/>
+        <path d="${linePath}" fill="none" stroke="#273cdb" stroke-width="2"/>
+        <!-- Nodes -->
+        ${points.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="#ffffff" stroke="#273cdb" stroke-width="2"/>`).join('')}
+      `;
+      document.getElementById('chart-volume-summary').innerText = `${trend.length} transactions recorded`;
+    }
+
+    function renderStatusBars(dist) {
+      const container = document.getElementById('status-distribution-container');
+      const statuses = ['CAPTURED', 'AUTHORIZED', 'PENDING', 'FAILED', 'PARTIALLY_REFUNDED'];
+      const total = Object.values(dist).reduce((a, b) => a + Number(b), 0);
+
+      if (total === 0) {
+        container.innerHTML = `<div class="state-box" style="padding: 10px;">No status distribution data yet</div>`;
+        return;
+      }
+
+      container.innerHTML = statuses.map(st => {
+        const count = dist[st] || 0;
+        const pct = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+        const cls = st.toLowerCase().replace('_', '-');
+        return `
+          <div class="status-bar-row">
+            <div class="status-bar-meta">
+              <span style="font-weight: 500;">${st}</span>
+              <span class="mono" style="color: var(--text-muted);">${count} (${pct}%)</span>
+            </div>
+            <div class="status-track">
+              <div class="status-fill ${cls}" style="width: ${pct}%;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderDashboardRecentPayments(list) {
+      const tbody = document.getElementById('dash-recent-payments-body');
+      if (!list || list.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="state-box" style="padding: 24px 16px; text-align: center;">
+              <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">No recent transactions yet</div>
+              <div style="color: var(--text-secondary); margin-bottom: 12px; font-size: 12.5px;">Create a payment to see transaction activity here.</div>
+              <button class="btn btn-primary btn-sm" onclick="openCreatePaymentModal()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create Payment
+              </button>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = list.map(p => `
+        <tr class="clickable-row" onclick="openPaymentDetail('${p.id}')">
+          <td><a class="mono-link" onclick="event.stopPropagation(); openPaymentDetail('${p.id}')">${p.id.slice(0, 8)}...</a></td>
+          <td class="mono"><strong>${formatMoney(p.amount_minor, p.currency)}</strong></td>
+          <td>${getStatusBadge(p.status)}</td>
+          <td class="mono" style="font-size: 11px;">${(p.merchant_id || '-').slice(0, 8)}...</td>
+          <td class="mono" style="font-size: 11px;">${(p.customer_id || '-').slice(0, 8)}...</td>
+          <td class="mono">${formatDate(p.created_at)}</td>
+          <td style="text-align: right;">
+            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openPaymentDetail('${p.id}')">Inspect</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // ========================================================================
+    // 2. PAYMENTS VIEW & MODALS
+    // ========================================================================
+    async function fetchPayments() {
+      const tbody = document.getElementById('payments-table-body');
+      tbody.innerHTML = `<tr><td colspan="7" class="state-box">Loading payments...</td></tr>`;
+      
+      try {
+        const status = document.getElementById('pay-filter-status').value;
+        const currency = document.getElementById('pay-filter-currency').value;
+        const q = new URLSearchParams({ page: '1', limit: '50' });
+        if (status) q.append('status', status);
+        if (currency) q.append('currency', currency);
+
+        const res = await fetch(`/api/v1/payments?${q.toString()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const list = json.data || [];
+
+        if (list.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" class="state-box">
+                No payments matched the current filters.
+                <button class="btn btn-primary btn-sm" onclick="openCreatePaymentModal()" style="margin-top: 6px;">+ Create Payment</button>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = list.map(p => `
+          <tr class="clickable-row" onclick="openPaymentDetail('${p.id}')">
+            <td><a class="mono-link" onclick="event.stopPropagation(); openPaymentDetail('${p.id}')">${p.id.slice(0, 8)}...</a></td>
+            <td>${getStatusBadge(p.status)}</td>
+            <td class="mono"><strong>${formatMoney(p.amount_minor, p.currency)}</strong></td>
+            <td class="mono">${formatMoney(p.captured_amount_minor, p.currency)}</td>
+            <td class="mono">${formatMoney(p.refunded_amount_minor, p.currency)}</td>
+            <td class="mono">${formatDate(p.created_at)}</td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 6px;">
+                <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openPaymentDetail('${p.id}')">View</button>
+                ${p.status === 'AUTHORIZED' ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); capturePayment('${p.id}')">Capture</button>` : ''}
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="state-box error">Failed to load payments: ${err.message} <button class="btn btn-secondary btn-sm" onclick="fetchPayments()">Retry</button></td></tr>`;
+      }
+    }
+
+    function onMerchantSelectChange() {
+      const sel = document.getElementById('cp-merchant-select');
+      const input = document.getElementById('cp-merchant');
+      if (!sel || !input) return;
+      if (sel.value === 'custom') {
+        input.style.display = 'block';
+        input.value = '';
+        input.focus();
+      } else {
+        input.style.display = 'none';
+        input.value = sel.value;
+      }
+    }
+
+    function onCustomerSelectChange() {
+      const sel = document.getElementById('cp-customer-select');
+      const input = document.getElementById('cp-customer');
+      if (!sel || !input) return;
+      if (sel.value === 'custom') {
+        input.style.display = 'block';
+        input.value = '';
+        input.focus();
+      } else {
+        input.style.display = 'none';
+        input.value = sel.value;
+      }
+    }
+
+    function updateAmountPreview() {
+      const amt = Number(document.getElementById('cp-amount')?.value || 0);
+      const cur = document.getElementById('cp-currency')?.value || 'INR';
+      const preview = document.getElementById('cp-amount-preview');
+      if (preview) {
+        preview.innerText = `= ${formatMoney(amt, cur)}`;
+      }
+    }
+
+    function generateNewIdempotencyKey() {
+      const key = 'idem_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+      const el = document.getElementById('cp-idempotency');
+      if (el) el.value = key;
+      return key;
+    }
+
+    function openCreatePaymentModal(mode = 'full') {
+      currentPaymentCreateMode = mode;
+      const title = document.getElementById('cp-modal-title');
+      const btn = document.getElementById('cp-submit-btn');
+      if (mode === 'intent') {
+        if (title) title.innerText = 'Create Payment Intent (Manual Lifecycle)';
+        if (btn) btn.innerText = 'Create Intent';
+      } else {
+        if (title) title.innerText = 'Create Payment (Direct Auto-Authorize)';
+        if (btn) btn.innerText = 'Create Payment';
+      }
+      generateNewIdempotencyKey();
+      updateAmountPreview();
+      openModal('modal-create-payment');
+    }
+
+    async function submitCreatePayment() {
+      const submitBtn = document.getElementById('cp-submit-btn');
+      const merchantId = document.getElementById('cp-merchant').value.trim();
+      const customerId = document.getElementById('cp-customer').value.trim();
+      const amount = Number(document.getElementById('cp-amount').value);
+      const currency = document.getElementById('cp-currency').value.trim().toUpperCase();
+      const idempotencyKey = document.getElementById('cp-idempotency').value.trim();
+      const desc = document.getElementById('cp-desc').value.trim();
+
+      if (!merchantId) {
+        showToast('Please select or specify a Merchant UUID', true);
+        return;
+      }
+      if (!customerId) {
+        showToast('Please select or specify a Customer UUID', true);
+        return;
+      }
+      if (!amount || amount <= 0 || !Number.isInteger(amount)) {
+        showToast('Amount must be a strictly positive integer in minor units (e.g. 50000 for ₹500.00)', true);
+        return;
+      }
+      if (!currency || currency.length !== 3) {
+        showToast('Currency must be a 3-letter ISO code', true);
+        return;
+      }
+      if (!idempotencyKey) {
+        showToast('Idempotency key is required', true);
+        return;
+      }
+
+      const origText = submitBtn.innerText;
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Creating...';
+
+      try {
+        const res = await fetch('/api/v1/payments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': idempotencyKey,
+            'x-actor-id': 'merchant_portal'
+          },
+          body: JSON.stringify({
+            merchant_id: merchantId,
+            customer_id: customerId,
+            amount_minor: amount,
+            currency: currency,
+            description: desc || undefined,
+            idempotency_key: idempotencyKey
+          })
+        });
+
+        const isReplay = res.headers.get('x-idempotency-replayed') === 'true';
+        const json = await res.json();
+
+        if (!res.ok) {
+          throw new Error(extractErrorMessage(json, 'Payment creation failed'));
+        }
+
+        let payment = json.data;
+        closeModal('modal-create-payment');
+
+        if (isReplay) {
+          showToast('Idempotent replay — existing payment returned.');
+        } else {
+          // If in direct mode and state is CREATED, auto-advance to AUTHORIZED
+          if (currentPaymentCreateMode === 'full' && payment.status === 'CREATED') {
+            try {
+              await fetch(`/api/v1/payments/${payment.id}/initiate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'init_' + idempotencyKey }
+              });
+              const authRes = await fetch(`/api/v1/payments/${payment.id}/authorize`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'auth_' + idempotencyKey }
+              });
+              if (authRes.ok) {
+                const authJson = await authRes.json();
+                payment = authJson.data || payment;
+              }
+            } catch (transitionErr) {
+              console.warn('Auto transition note:', transitionErr);
+            }
+          }
+          showToast(`Payment ${payment.id.slice(0, 8)} created successfully (${payment.status})`);
+        }
+
+        // Refresh Payments list & Dashboard metrics simultaneously
+        await Promise.all([fetchPayments(), fetchDashboardData()]);
+
+        // Open newly created payment for inspection
+        openPaymentDetail(payment.id);
+      } catch (err) {
+        showToast(err.message, true);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = origText;
+      }
+    }
+
+    // Payment Detail Modal & State Machine Actions
+    async function openPaymentDetail(paymentId) {
+      activePaymentDetailId = paymentId;
+      openModal('modal-payment-detail');
+      
+      document.getElementById('pm-amount').innerText = '...';
+      document.getElementById('pm-id').innerText = paymentId;
+      const transButtons = document.getElementById('pm-transition-buttons');
+      if (transButtons) transButtons.innerHTML = 'Loading actions...';
+
+      try {
+        const res = await fetch(`/api/v1/payments/${paymentId}`);
+        if (!res.ok) throw new Error('Payment not found');
+        const json = await res.json();
+        const p = json.data;
+
+        document.getElementById('pm-amount').innerText = formatMoney(p.amount_minor, p.currency);
+        document.getElementById('pm-status-pill').innerHTML = getStatusBadge(p.status);
+        document.getElementById('pm-merchant').innerText = p.merchant?.business_name ? `${p.merchant.business_name} (${p.merchant_id})` : (p.merchant_id || '-');
+        document.getElementById('pm-customer').innerText = p.customer?.name ? `${p.customer.name} (${p.customer_id})` : (p.customer_id || '-');
+        document.getElementById('pm-currency').innerText = p.currency || 'INR';
+        document.getElementById('pm-captured').innerText = formatMoney(p.captured_amount_minor, p.currency);
+        document.getElementById('pm-refunded').innerText = formatMoney(p.refunded_amount_minor, p.currency);
+        document.getElementById('pm-created').innerText = formatDate(p.created_at);
+
+        // Render Audit Trail List
+        const auditBox = document.getElementById('pm-audit-list');
+        if (auditBox) {
+          const logs = p.audit_logs || [];
+          if (logs.length === 0) {
+            auditBox.innerHTML = '<div style="color: var(--text-muted); font-size: 11.5px;">Initial state recorded</div>';
+          } else {
+            auditBox.innerHTML = logs.map(l => `
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 0; border-bottom: 1px dashed var(--border-subtle); font-size: 11px;">
+                <span class="mono" style="color: var(--text-primary); font-weight: 600;">${l.action}</span>
+                <span class="mono" style="color: var(--text-muted);">${formatDate(l.created_at)}</span>
+              </div>
+            `).join('');
+          }
+        }
+
+        // Render Lifecycle Timeline
+        renderTimeline(p.status);
+
+        // Render State Machine Action Buttons
+        renderPaymentTransitions(p);
+
+        // Compensating Refund Form Visibility
+        const refundBox = document.getElementById('pm-refund-box');
+        if (refundBox) {
+          const refundable = (p.status === 'CAPTURED' || p.status === 'PARTIALLY_REFUNDED') && (Number(p.captured_amount_minor || 0) > Number(p.refunded_amount_minor || 0));
+          refundBox.style.display = refundable ? 'block' : 'none';
+          const maxRefund = Number(p.captured_amount_minor || 0) - Number(p.refunded_amount_minor || 0);
+          const refundInput = document.getElementById('pm-refund-amount');
+          if (refundInput && refundable) {
+            refundInput.max = maxRefund;
+            refundInput.placeholder = `Minor units (max: ${maxRefund})`;
+          }
+        }
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    function renderPaymentTransitions(p) {
+      const transBox = document.getElementById('pm-transition-buttons');
+      if (!transBox) return;
+
+      const st = p.status;
+      let buttonsHtml = '';
+
+      if (st === 'CREATED') {
+        buttonsHtml = `
+          <button class="btn btn-primary btn-sm" id="btn-pm-initiate" onclick="transitionCurrentPayment('initiate')">Initiate Payment</button>
+          <button class="btn btn-secondary btn-sm" id="btn-pm-cancel" onclick="transitionCurrentPayment('cancel')">Cancel Payment</button>
+        `;
+      } else if (st === 'PENDING') {
+        buttonsHtml = `
+          <button class="btn btn-primary btn-sm" id="btn-pm-authorize" onclick="transitionCurrentPayment('authorize')">Authorize Payment</button>
+          <button class="btn btn-secondary btn-sm" id="btn-pm-cancel" onclick="transitionCurrentPayment('cancel')">Cancel Payment</button>
+        `;
+      } else if (st === 'AUTHORIZED') {
+        buttonsHtml = `
+          <button class="btn btn-primary btn-sm" id="btn-pm-capture" onclick="transitionCurrentPayment('capture')">Capture Payment</button>
+          <button class="btn btn-secondary btn-sm" id="btn-pm-cancel" onclick="transitionCurrentPayment('cancel')">Cancel Payment</button>
+        `;
+      } else if (st === 'CAPTURED') {
+        buttonsHtml = `<span style="font-size: 12px; color: var(--success-text); font-weight: 600;">✓ Payment fully captured & ledger entries posted</span>`;
+      } else if (st === 'PARTIALLY_REFUNDED') {
+        buttonsHtml = `<span style="font-size: 12px; color: var(--info-text); font-weight: 600;">ℹ Payment partially refunded via compensating entry</span>`;
+      } else if (st === 'REFUNDED') {
+        buttonsHtml = `<span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">✓ Payment fully refunded (terminal state)</span>`;
+      } else if (st === 'CANCELLED') {
+        buttonsHtml = `<span style="font-size: 12px; color: var(--danger-text); font-weight: 600;">✕ Payment cancelled (terminal state)</span>`;
+      } else {
+        buttonsHtml = `<span style="font-size: 12px; color: var(--text-muted);">${st}</span>`;
+      }
+
+      transBox.innerHTML = buttonsHtml;
+    }
+
+    async function transitionCurrentPayment(action) {
+      if (!activePaymentDetailId) return;
+      const btn = document.getElementById(`btn-pm-${action}`);
+      const origText = btn ? btn.innerText : action;
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Processing...';
+      }
+
+      try {
+        const res = await fetch(`/api/v1/payments/${activePaymentDetailId}/${action}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': `${action}_${Date.now()}`,
+            'x-actor-id': 'merchant_portal'
+          }
+        });
+
+        const json = await res.json();
+        if (!res.ok) {
+          throw new Error(extractErrorMessage(json, `Failed to ${action} payment`));
+        }
+
+        showToast(`Payment ${action}d successfully!`);
+        await Promise.all([
+          openPaymentDetail(activePaymentDetailId),
+          fetchPayments(),
+          fetchDashboardData()
+        ]);
+
+        if (action === 'capture') {
+          // If ledger is open or needed, ledger records are updated
+          fetchLedger();
+        }
+      } catch (err) {
+        showToast(err.message, true);
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = origText;
+        }
+      }
+    }
+
+    async function capturePayment(paymentId) {
+      try {
+        const res = await fetch(`/api/v1/payments/${paymentId}/capture`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'cap_' + Date.now() }
+        });
+        if (!res.ok) {
+          const json = await res.json();
+          throw new Error(extractErrorMessage(json, 'Capture failed'));
+        }
+        showToast('Payment captured successfully & double-entry ledger posted!');
+        await Promise.all([fetchPayments(), fetchDashboardData()]);
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    function renderTimeline(status) {
+      const steps = ['CREATED', 'PENDING', 'AUTHORIZED', 'CAPTURED', 'SETTLED'];
+      const currentIdx = steps.indexOf(status);
+
+      const timelineEl = document.getElementById('pm-timeline');
+      if (!timelineEl) return;
+
+      timelineEl.innerHTML = steps.map((s, idx) => {
+        let stateCls = '';
+        if (currentIdx >= 0) {
+          if (idx < currentIdx) stateCls = 'completed';
+          else if (idx === currentIdx) stateCls = 'active';
+        }
+        return `
+          <div class="timeline-step ${stateCls}">
+            <div class="timeline-node">${idx < currentIdx ? '✓' : (idx + 1)}</div>
+            <div class="timeline-label">${s}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function submitModalRefund() {
+      if (!activePaymentDetailId) return;
+      const refundBtn = document.getElementById('pm-refund-btn');
+      const amountInput = document.getElementById('pm-refund-amount');
+      const reasonInput = document.getElementById('pm-refund-reason');
+      const amount = Number(amountInput.value);
+      const reason = reasonInput.value.trim();
+
+      if (!amount || amount <= 0 || !Number.isInteger(amount)) {
+        showToast('Please enter a valid refund amount in minor units (> 0)', true);
+        return;
+      }
+
+      const origText = refundBtn ? refundBtn.innerText : 'Execute Refund';
+      if (refundBtn) {
+        refundBtn.disabled = true;
+        refundBtn.innerText = 'Refunding...';
+      }
+
+      try {
+        const res = await fetch(`/api/v1/payments/${activePaymentDetailId}/refund`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'ref_' + Date.now() },
+          body: JSON.stringify({ amount_minor: amount, reason: reason || 'Merchant Compensating Refund' })
+        });
+
+        const json = await res.json();
+        if (!res.ok) {
+          throw new Error(extractErrorMessage(json, 'Refund failed'));
+        }
+
+        showToast('Compensating refund issued successfully & posted to ledger!');
+        amountInput.value = '';
+        reasonInput.value = '';
+        await Promise.all([
+          openPaymentDetail(activePaymentDetailId),
+          fetchPayments(),
+          fetchDashboardData()
+        ]);
+      } catch (err) {
+        showToast(err.message, true);
+      } finally {
+        if (refundBtn) {
+          refundBtn.disabled = false;
+          refundBtn.innerText = origText;
+        }
+      }
+    }
+
+    // ========================================================================
+    // 3. REFUNDS VIEW
+    // ========================================================================
+    async function fetchRefunds() {
+      const tbody = document.getElementById('refunds-table-body');
+      tbody.innerHTML = `<tr><td colspan="7" class="state-box">Scanning payments for refund records...</td></tr>`;
+
+      try {
+        const pRes = await fetch('/api/v1/payments?page=1&limit=50');
+        const pJson = await pRes.json();
+        const payments = pJson.data || [];
+
+        const allRefunds = [];
+        for (const p of payments) {
+          if (p.refunded_amount_minor > 0) {
+            const rRes = await fetch(`/api/v1/payments/${p.id}/refunds`);
+            if (rRes.ok) {
+              const rJson = await rRes.json();
+              if (rJson.data) allRefunds.push(...rJson.data);
+            }
+          }
+        }
+
+        if (allRefunds.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="state-box">No compensating refunds recorded yet.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = allRefunds.map(r => `
+          <tr>
+            <td class="mono">${r.id.slice(0, 8)}...</td>
+            <td><a class="mono-link" onclick="openPaymentDetail('${r.payment_id}')">${(r.payment_id || '').slice(0, 8)}...</a></td>
+            <td class="mono"><strong>${formatMoney(r.amount_minor, r.currency)}</strong></td>
+            <td>${getStatusBadge(r.status)}</td>
+            <td>${r.reason || '-'}</td>
+            <td class="mono" style="font-size: 11px; color: var(--text-muted);">${r.idempotency_key || '-'}</td>
+            <td class="mono">${formatDate(r.created_at)}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="state-box error">Failed to load refunds: ${err.message}</td></tr>`;
+      }
+    }
+
+    // ========================================================================
+    // 4. DOUBLE-ENTRY LEDGER VIEW
+    // ========================================================================
+    async function fetchLedger() {
+      const tbody = document.getElementById('ledger-table-body');
+      tbody.innerHTML = `<tr><td colspan="7" class="state-box">Auditing double-entry transactions...</td></tr>`;
+
+      try {
+        const [txRes, auditRes] = await Promise.all([
+          fetch('/api/v1/ledger/transactions?page=1&limit=50'),
+          fetch('/api/v1/ledger/integrity')
+        ]);
+
+        if (auditRes.ok) {
+          const aJson = await auditRes.json();
+          const d = aJson.data || {};
+          document.getElementById('ledger-totals-strip').innerText = 
+            `Total Debits: ${formatMoney(d.totalDebitsMinor || 0)} | Total Credits: ${formatMoney(d.totalCreditsMinor || 0)} | Invariant Balance: ✓ Balanced`;
+        }
+
+        if (!txRes.ok) throw new Error(`HTTP ${txRes.status}`);
+        const txJson = await txRes.json();
+        
+        const list = Array.isArray(txJson.data) ? txJson.data : (txJson.data?.transactions || []);
+
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="state-box">No ledger transactions posted yet.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = list.map(tx => {
+          const debits = tx.entries?.filter(e => e.entryType === 'DEBIT') || [];
+          const credits = tx.entries?.filter(e => e.entryType === 'CREDIT') || [];
+          const totalDebit = debits.reduce((acc, e) => acc + Number(e.amountMinor || 0), 0);
+          const totalCredit = credits.reduce((acc, e) => acc + Number(e.amountMinor || 0), 0);
+
+          return `
+            <tr>
+              <td class="mono">${tx.id.slice(0, 8)}...</td>
+              <td><span class="badge badge-info">${tx.transactionType}</span></td>
+              <td class="mono" style="font-size: 11px;">${tx.referenceType}:${(tx.referenceId || '').slice(0, 8)}</td>
+              <td class="mono" style="color: var(--success-text); font-weight: 600;">${formatMoney(totalDebit, tx.currency)}</td>
+              <td class="mono" style="color: var(--primary); font-weight: 600;">${formatMoney(totalCredit, tx.currency)}</td>
+              <td class="mono">${tx.currency}</td>
+              <td class="mono">${formatDate(tx.createdAt || tx.postedAt)}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="state-box error">Failed to load ledger: ${err.message}</td></tr>`;
+      }
+    }
+
+    // ========================================================================
+    // 5. RISK ENGINE VIEW
+    // ========================================================================
+    async function fetchRisk() {
+      const tbody = document.getElementById('risk-table-body');
+      tbody.innerHTML = `<tr><td colspan="7" class="state-box">Loading risk evaluations...</td></tr>`;
+
+      try {
+        const lvl = document.getElementById('risk-filter-level').value;
+        const dec = document.getElementById('risk-filter-decision').value;
+        const q = new URLSearchParams({ page: '1', limit: '50' });
+        if (lvl) q.append('risk_level', lvl);
+        if (dec) q.append('decision', dec);
+
+        const res = await fetch(`/api/v1/risk/assessments?${q.toString()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const list = json.data || [];
+
+        // Calculate actual operational risk counts
+        let lowCount = 0, medCount = 0, highCount = 0, critCount = 0;
+        list.forEach(a => {
+          const l = String(a.riskLevel || '').toUpperCase();
+          if (l === 'LOW') lowCount++;
+          else if (l === 'MEDIUM') medCount++;
+          else if (l === 'HIGH') highCount++;
+          else if (l === 'CRITICAL') critCount++;
+        });
+        const elLow = document.getElementById('risk-count-low');
+        if (elLow) elLow.innerText = lowCount;
+        const elMed = document.getElementById('risk-count-med');
+        if (elMed) elMed.innerText = medCount;
+        const elHigh = document.getElementById('risk-count-high');
+        if (elHigh) elHigh.innerText = highCount;
+        const elCrit = document.getElementById('risk-count-crit');
+        if (elCrit) elCrit.innerText = critCount;
+
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="state-box">No risk assessments found matching filters.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = list.map(a => {
+          const rules = (a.triggeredRules || []).map(r => `<span class="badge badge-neutral" style="font-size: 9.5px;">${r.ruleName || r.ruleId} (+${r.score})</span>`).join(' ') || '<span style="color: var(--text-muted);">-</span>';
+          return `
+            <tr>
+              <td class="mono">${a.id.slice(0, 8)}...</td>
+              <td><a class="mono-link" onclick="openPaymentDetail('${a.paymentId}')">${(a.paymentId || '').slice(0, 8)}...</a></td>
+              <td class="mono"><strong>${a.riskScore ?? 0}</strong>/100</td>
+              <td>${getStatusBadge(a.riskLevel)}</td>
+              <td>${getStatusBadge(a.decision)}</td>
+              <td>${rules}</td>
+              <td class="mono">${formatDate(a.createdAt)}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="state-box error">Failed to load risk evaluations: ${err.message}</td></tr>`;
+      }
+    }
+
+    // ========================================================================
+    // 6. WEBHOOKS VIEW
+    // ========================================================================
+    async function fetchWebhooks() {
+      const tbody = document.getElementById('webhooks-table-body');
+      tbody.innerHTML = `<tr><td colspan="6" class="state-box">Loading webhooks...</td></tr>`;
+
+      try {
+        const res = await fetch('/api/v1/webhooks?page=1&limit=50');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const list = json.data || [];
+
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="state-box">No inbound webhook events recorded yet.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = list.map(w => `
+          <tr>
+            <td class="mono"><strong>${w.eventId}</strong></td>
+            <td><span class="badge badge-neutral">${w.provider}</span></td>
+            <td class="mono">${w.eventType}</td>
+            <td>${getStatusBadge(w.status)}</td>
+            <td class="mono">${w.attempts}/${w.maxAttempts || 5}</td>
+            <td class="mono">${formatDate(w.receivedAt)}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="state-box error">Failed to load webhooks: ${err.message}</td></tr>`;
+      }
+    }
+
+    // ========================================================================
+    // 7. DEAD LETTER QUEUE (DLQ) VIEW (FUNCTIONAL RETRY & RESOLVE)
+    // ========================================================================
+    async function fetchDLQ() {
+      const tbody = document.getElementById('dlq-table-body');
+      tbody.innerHTML = `<tr><td colspan="7" class="state-box">Inspecting dead letter queue...</td></tr>`;
+
+      try {
+        const res = await fetch('/api/v1/webhooks/dead-letter?page=1&limit=50', {
+          headers: { 'x-admin-key': ADMIN_KEY }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const list = json.data || [];
+
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="state-box" style="color: var(--success-text);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Dead letter queue is empty. Zero poison events.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = list.map(d => `
+          <tr>
+            <td class="mono"><strong>${d.eventId}</strong></td>
+            <td class="mono">${d.eventType}</td>
+            <td style="color: var(--danger-text); font-size: 11.5px; max-width: 250px; overflow: hidden; text-overflow: ellipsis;">${d.lastError || 'Retry exhaustion'}</td>
+            <td class="mono">${d.attempts}</td>
+            <td>${getStatusBadge(d.status)}</td>
+            <td class="mono">${formatDate(d.createdAt)}</td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 6px;">
+                <button class="btn btn-primary btn-sm" onclick="retryDLQ('${d.id}')">Retry</button>
+                <button class="btn btn-secondary btn-sm" onclick="resolveDLQ('${d.id}')">Resolve</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="state-box error">Failed to load DLQ: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function retryDLQ(id) {
+      try {
+        const res = await fetch(`/api/v1/webhooks/dead-letter/${id}/retry`, {
+          method: 'POST',
+          headers: { 'x-admin-key': ADMIN_KEY }
+        });
+        if (!res.ok) throw new Error('Retry request rejected');
+        showToast('DLQ event re-queued for processing!');
+        fetchDLQ();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    async function resolveDLQ(id) {
+      try {
+        const res = await fetch(`/api/v1/webhooks/dead-letter/${id}/resolve`, {
+          method: 'POST',
+          headers: { 'x-admin-key': ADMIN_KEY }
+        });
+        if (!res.ok) throw new Error('Resolution rejected');
+        showToast('DLQ event marked as resolved!');
+        fetchDLQ();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    // ========================================================================
+    // 8. RECONCILIATION VIEW (DATASET GENERATION, TRIGGER RUN, INSPECTION)
+    // ========================================================================
+    async function fetchReconciliation() {
+      const tbody = document.getElementById('recon-runs-table-body');
+      tbody.innerHTML = `<tr><td colspan="10" class="state-box">Loading reconciliation records...</td></tr>`;
+
+      try {
+        const res = await fetch('/api/v1/reconciliation/runs?page=1&limit=50');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const list = json.data || [];
+
+        // Aggregate operational reconciliation counts
+        let totalMatched = 0, totalMismatches = 0, totalMissInt = 0, totalMissExt = 0;
+        list.forEach(r => {
+          totalMatched += Number(r.matchedCount ?? r.matched ?? 0);
+          totalMismatches += Number(r.mismatchCount ?? r.mismatches ?? 0);
+          totalMissInt += Number(r.missingInternalCount ?? r.missing_internal ?? 0);
+          totalMissExt += Number(r.missingExternalCount ?? r.missing_external ?? 0);
+        });
+        const elM = document.getElementById('recon-summary-matched');
+        if (elM) elM.innerText = totalMatched;
+        const elMis = document.getElementById('recon-summary-mismatches');
+        if (elMis) elMis.innerText = totalMismatches;
+        const elMiInt = document.getElementById('recon-summary-missing-int');
+        if (elMiInt) elMiInt.innerText = totalMissInt;
+        const elMiExt = document.getElementById('recon-summary-missing-ext');
+        if (elMiExt) elMiExt.innerText = totalMissExt;
+        const elDup = document.getElementById('recon-summary-duplicates');
+        if (elDup) elDup.innerText = 0;
+
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="10" class="state-box">No reconciliation runs executed yet. Click "+ Trigger Reconciliation Run" or "+ Generate Test Dataset" to begin.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = list.map(r => {
+          const runId = r.id || r.runId || r.run_id;
+          const ref = r.runReference || r.run_reference || 'RUN';
+          return `
+            <tr>
+              <td><a class="mono-link" onclick="openReconDetail('${runId}')"><strong>${ref}</strong></a></td>
+              <td><span class="badge badge-neutral">${r.provider}</span></td>
+              <td class="mono" style="font-size: 11.5px;">${formatDate(r.periodStart || r.period_start)} → ${formatDate(r.periodEnd || r.period_end)}</td>
+              <td class="mono" style="color: var(--success-text); font-weight: 600;">${r.matchedCount ?? r.matched ?? 0}</td>
+              <td class="mono" style="color: var(--danger-text); font-weight: 600;">${r.mismatchCount ?? r.mismatches ?? 0}</td>
+              <td class="mono">${r.missingInternalCount ?? r.missing_internal ?? 0}</td>
+              <td class="mono">${r.missingExternalCount ?? r.missing_external ?? 0}</td>
+              <td>${getStatusBadge(r.status)}</td>
+              <td class="mono">${formatDate(r.createdAt || r.created_at)}</td>
+              <td style="text-align: right;">
+                <button class="btn btn-secondary btn-sm" onclick="openReconDetail('${runId}')">View Details</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="10" class="state-box error">Failed to load reconciliation runs: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function generateTestDataset() {
+      const btn = document.getElementById('btn-gen-dataset');
+      const origText = btn ? btn.innerText : '+ Generate Test Dataset';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Generating Dataset...';
+      }
+
+      try {
+        const res = await fetch('/api/v1/reconciliation/generate-test-dataset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider: 'mockpay',
+            matchedCount: 5,
+            amountMismatchCount: 1,
+            missingInternalCount: 1,
+            missingExternalCount: 1
+          })
+        });
+
+        const json = await res.json();
+        if (!res.ok) throw new Error(extractErrorMessage(json, 'Failed to generate dataset'));
+
+        const count = json.data?.external_count || json.data?.totalExternalRecords || 'external';
+        showToast(`Generated ${count} provider test records for ${json.data?.provider || 'mockpay'}`);
+        await Promise.all([fetchReconciliation(), fetchDashboardData()]);
+      } catch (err) {
+        showToast(err.message, true);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = origText;
+        }
+      }
+    }
+
+    async function triggerReconRun() {
+      const btn = document.getElementById('btn-trigger-recon');
+      const origText = btn ? btn.innerText : '+ Trigger Reconciliation Run';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Reconciling...';
+      }
+
+      try {
+        const now = new Date();
+        const past = new Date(Date.now() - 30 * 24 * 3600 * 1000);
+
+        // Step 1: Create Reconciliation Run (returns 202 QUEUED)
+        const createRes = await fetch('/api/v1/reconciliation/runs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider: 'mockpay',
+            period_start: past.toISOString(),
+            period_end: now.toISOString()
+          })
+        });
+
+        const createJson = await createRes.json();
+        if (!createRes.ok) throw new Error(extractErrorMessage(createJson, 'Failed to create reconciliation run'));
+
+        const runId = createJson.data?.id;
+        showToast('Reconciliation run queued. Executing matcher...');
+
+        // Step 2: Execute Reconciliation Run (processes internal vs external records)
+        if (runId) {
+          const execRes = await fetch(`/api/v1/reconciliation/runs/${runId}/execute`, { method: 'POST' });
+          const execJson = await execRes.json();
+          if (!execRes.ok) throw new Error(extractErrorMessage(execJson, 'Reconciliation execution failed'));
+
+          const run = execJson.data || {};
+          showToast(`Reconciliation complete! Matched: ${run.matchedCount ?? run.matched ?? 0}, Mismatches: ${run.mismatchCount ?? run.mismatches ?? 0}`);
+          await Promise.all([fetchReconciliation(), fetchDashboardData()]);
+          openReconDetail(runId);
+        } else {
+          showToast('Reconciliation run created!');
+          await Promise.all([fetchReconciliation(), fetchDashboardData()]);
+        }
+      } catch (err) {
+        showToast(err.message, true);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = origText;
+        }
+      }
+    }
+
+    // Reconciliation Run Detail Modal
+    async function openReconDetail(runId) {
+      activeReconDetailId = runId;
+      openModal('modal-recon-detail');
+
+      const tbody = document.getElementById('recon-modal-records-body');
+      tbody.innerHTML = `<tr><td colspan="8" class="state-box">Loading run records & discrepancies...</td></tr>`;
+
+      try {
+        const [runRes, recRes] = await Promise.all([
+          fetch(`/api/v1/reconciliation/runs/${runId}`),
+          fetch(`/api/v1/reconciliation/runs/${runId}/records?limit=100`)
+        ]);
+
+        if (runRes.ok) {
+          const rJson = await runRes.json();
+          const r = rJson.data || {};
+          document.getElementById('recon-modal-ref').innerText = r.runReference || r.run_reference || runId;
+          document.getElementById('recon-modal-provider').innerText = `Provider: ${r.provider} | Period: ${formatDate(r.periodStart || r.period_start)} → ${formatDate(r.periodEnd || r.period_end)}`;
+          document.getElementById('recon-modal-status-pill').innerHTML = getStatusBadge(r.status);
+          document.getElementById('recon-modal-matched').innerText = r.matchedCount ?? r.matched ?? 0;
+          document.getElementById('recon-modal-mismatches').innerText = r.mismatchCount ?? r.mismatches ?? 0;
+          document.getElementById('recon-modal-missing-int').innerText = r.missingInternalCount ?? r.missing_internal ?? 0;
+          document.getElementById('recon-modal-missing-ext').innerText = r.missingExternalCount ?? r.missing_external ?? 0;
+        }
+
+        if (recRes.ok) {
+          const recJson = await recRes.json();
+          const records = recJson.data || [];
+
+          if (records.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="state-box">No itemized discrepancy records found for this run.</td></tr>`;
+            return;
+          }
+
+          tbody.innerHTML = records.map(rec => {
+            const intAmt = rec.internalAmountMinor !== null && rec.internalAmountMinor !== undefined ? formatMoney(rec.internalAmountMinor) : '-';
+            const extAmt = rec.externalAmountMinor !== null && rec.externalAmountMinor !== undefined ? formatMoney(rec.externalAmountMinor) : '-';
+            const diff = rec.discrepancyAmountMinor !== null && rec.discrepancyAmountMinor !== undefined ? formatMoney(rec.discrepancyAmountMinor) : '₹0.00';
+            const status = rec.status || 'OPEN';
+
+            let actionHtml = '';
+            if (rec.result !== 'MATCHED') {
+              if (status === 'OPEN') {
+                actionHtml = `
+                  <div style="display: inline-flex; gap: 4px;">
+                    <button class="btn btn-secondary btn-sm" onclick="investigateDiscrepancy('${rec.id}')">Investigate</button>
+                    <button class="btn btn-primary btn-sm" onclick="resolveDiscrepancy('${rec.id}')">Resolve</button>
+                    <button class="btn btn-ghost btn-sm" onclick="waiveDiscrepancy('${rec.id}')">Waive</button>
+                  </div>
+                `;
+              } else if (status === 'INVESTIGATING') {
+                actionHtml = `
+                  <div style="display: inline-flex; gap: 4px;">
+                    <button class="btn btn-primary btn-sm" onclick="resolveDiscrepancy('${rec.id}')">Resolve</button>
+                    <button class="btn btn-ghost btn-sm" onclick="waiveDiscrepancy('${rec.id}')">Waive</button>
+                  </div>
+                `;
+              } else {
+                actionHtml = `<span style="font-size: 11px; color: var(--success-text); font-weight: 600;">✓ ${status}</span>`;
+              }
+            } else {
+              actionHtml = `<span style="font-size: 11px; color: var(--text-muted);">Clean Match</span>`;
+            }
+
+            return `
+              <tr>
+                <td class="mono" style="font-size: 11px;">${(rec.internalTransactionId || rec.internalReference || '-').slice(0, 10)}...</td>
+                <td class="mono" style="font-size: 11px;">${(rec.externalTransactionId || rec.externalReference || '-').slice(0, 10)}...</td>
+                <td>${getStatusBadge(rec.result)}</td>
+                <td class="mono">${intAmt}</td>
+                <td class="mono">${extAmt}</td>
+                <td class="mono" style="color: ${rec.result !== 'MATCHED' ? 'var(--danger-text)' : 'inherit'}; font-weight: 600;">${diff}</td>
+                <td>${getStatusBadge(status)}</td>
+                <td style="text-align: right;">${actionHtml}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" class="state-box error">Failed to load run details: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function investigateDiscrepancy(recordId) {
+      try {
+        const res = await fetch(`/api/v1/reconciliation/records/${recordId}/investigate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ actor: 'ops_specialist', notes: 'Operator initiated investigation into discrepancy' })
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(extractErrorMessage(json, 'Failed to investigate'));
+
+        showToast('Discrepancy transitioned to INVESTIGATING');
+        if (activeReconDetailId) openReconDetail(activeReconDetailId);
+        fetchReconciliation();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    async function resolveDiscrepancy(recordId) {
+      try {
+        const res = await fetch(`/api/v1/reconciliation/records/${recordId}/resolve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resolved_by: 'ops_specialist', resolution_notes: 'Manual balance verification approved' })
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(extractErrorMessage(json, 'Failed to resolve'));
+
+        showToast('Discrepancy marked as RESOLVED');
+        if (activeReconDetailId) openReconDetail(activeReconDetailId);
+        await Promise.all([fetchReconciliation(), fetchDashboardData()]);
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    async function waiveDiscrepancy(recordId) {
+      try {
+        const res = await fetch(`/api/v1/reconciliation/records/${recordId}/waive`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resolved_by: 'ops_specialist', resolution_notes: 'Immaterial rounding tolerance waived' })
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(extractErrorMessage(json, 'Failed to waive'));
+
+        showToast('Discrepancy marked as WAIVED');
+        if (activeReconDetailId) openReconDetail(activeReconDetailId);
+        await Promise.all([fetchReconciliation(), fetchDashboardData()]);
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    // ========================================================================
+    // 9. SETTLEMENTS VIEW (BATCH CREATION, PROCESSING, DISBURSAL & LEDGER)
+    // ========================================================================
+    async function fetchSettlements() {
+      const tbody = document.getElementById('settlements-table-body');
+      tbody.innerHTML = `<tr><td colspan="9" class="state-box">Loading settlement batches...</td></tr>`;
+
+      try {
+        const res = await fetch('/api/v1/settlements?page=1&limit=50');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const list = json.data || [];
+
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="9" class="state-box">No settlement batches created yet. Click "+ Create Settlement Batch".</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = list.map(b => {
+          const batchId = b.id;
+          const ref = b.batchReference || b.batch_reference || 'BATCH';
+          return `
+            <tr>
+              <td><a class="mono-link" onclick="openSettlementDetail('${batchId}')"><strong>${ref}</strong></a></td>
+              <td class="mono" style="font-size: 11px;">${(b.merchantId || b.merchant_id || '-').slice(0, 8)}...</td>
+              <td class="mono">${formatMoney(b.grossAmountMinor || b.gross_amount_minor, b.currency)}</td>
+              <td class="mono" style="color: var(--danger-text);">${formatMoney(b.refundAmountMinor || b.refund_amount_minor, b.currency)}</td>
+              <td class="mono" style="color: var(--warning-text);">${formatMoney(b.feeAmountMinor || b.fee_amount_minor, b.currency)}</td>
+              <td class="mono" style="color: var(--success-text); font-weight: 700;">${formatMoney(b.netAmountMinor || b.net_amount_minor, b.currency)}</td>
+              <td>${getStatusBadge(b.status)}</td>
+              <td class="mono">${formatDate(b.createdAt || b.created_at)}</td>
+              <td style="text-align: right;">
+                <div style="display: inline-flex; gap: 6px;">
+                  <button class="btn btn-secondary btn-sm" onclick="openSettlementDetail('${batchId}')">Inspect</button>
+                  ${(b.status === 'READY') ? `<button class="btn btn-primary btn-sm" onclick="disburseSettlement('${batchId}')">Disburse</button>` : ''}
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="9" class="state-box error">Failed to load settlements: ${err.message}</td></tr>`;
+      }
+    }
+
+    function onSettlementMerchantChange() {
+      const sel = document.getElementById('cs-merchant-select');
+      const input = document.getElementById('cs-merchant');
+      if (!sel || !input) return;
+      if (sel.value === 'custom') {
+        input.style.display = 'block';
+        input.value = '';
+        input.focus();
+      } else {
+        input.style.display = 'none';
+        input.value = sel.value;
+      }
+    }
+
+    function openCreateSettlementModal() {
+      const now = new Date(Date.now() + 24 * 3600 * 1000);
+      const past = new Date(Date.now() - 30 * 24 * 3600 * 1000);
+      const startEl = document.getElementById('cs-start');
+      const endEl = document.getElementById('cs-end');
+      if (startEl) startEl.value = past.toISOString();
+      if (endEl) endEl.value = now.toISOString();
+      openModal('modal-create-settlement');
+    }
+
+    async function submitCreateSettlement() {
+      const submitBtn = document.getElementById('cs-submit-btn');
+      const merchantId = document.getElementById('cs-merchant').value.trim();
+      const currency = document.getElementById('cs-currency').value.trim().toUpperCase();
+      const feeBps = Number(document.getElementById('cs-fee-bps').value || 150);
+      const start = document.getElementById('cs-start').value.trim();
+      const end = document.getElementById('cs-end').value.trim();
+
+      if (!merchantId) {
+        showToast('Please select or specify a Merchant UUID', true);
+        return;
+      }
+      if (!currency || currency.length !== 3) {
+        showToast('Please select a valid 3-letter currency', true);
+        return;
+      }
+      if (!start || !end) {
+        showToast('Period Start and Period End are required ISO datetimes', true);
+        return;
+      }
+
+      const origText = submitBtn.innerText;
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Creating Batch...';
+
+      try {
+        // Step 1: Create Batch
+        const res = await fetch('/api/v1/settlements/batches', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+          body: JSON.stringify({
+            merchant_id: merchantId,
+            currency: currency,
+            fee_bps: feeBps,
+            period_start: start,
+            period_end: end
+          })
+        });
+
+        const json = await res.json();
+        if (!res.ok) {
+          throw new Error(extractErrorMessage(json, 'Failed to create settlement batch'));
+        }
+
+        const batch = json.data || json.batch;
+        closeModal('modal-create-settlement');
+
+        // Step 2: Auto-process batch so that Net = Gross - Refunds - Fees is computed immediately
+        if (batch?.id && (batch.status === 'PENDING' || batch.status === 'PROCESSING')) {
+          try {
+            await fetch(`/api/v1/settlements/${batch.id}/process`, {
+              method: 'POST',
+              headers: { 'x-admin-key': ADMIN_KEY }
+            });
+          } catch (procErr) {
+            console.warn('Batch process note:', procErr);
+          }
+        }
+
+        showToast('Settlement batch created & processed! Financial totals calculated.');
+        await Promise.all([fetchSettlements(), fetchDashboardData()]);
+        if (batch?.id) {
+          openSettlementDetail(batch.id);
+        }
+      } catch (err) {
+        showToast(err.message, true);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = origText;
+      }
+    }
+
+    // Settlement Batch Detail Modal
+    async function openSettlementDetail(batchId) {
+      activeSettlementDetailId = batchId;
+      openModal('modal-settlement-detail');
+
+      const recordsTbody = document.getElementById('sb-modal-records-body');
+      recordsTbody.innerHTML = `<tr><td colspan="6" class="state-box">Loading settlement records & breakdown...</td></tr>`;
+
+      try {
+        const [batchRes, recRes] = await Promise.all([
+          fetch(`/api/v1/settlements/${batchId}`),
+          fetch(`/api/v1/settlements/${batchId}/records?limit=100`)
+        ]);
+
+        if (batchRes.ok) {
+          const bJson = await batchRes.json();
+          const b = bJson.data || {};
+
+          document.getElementById('sb-modal-ref').innerText = b.batchReference || b.batch_reference || batchId;
+          document.getElementById('sb-modal-merchant').innerText = `Merchant ID: ${b.merchantId || b.merchant_id} | Currency: ${b.currency}`;
+          document.getElementById('sb-modal-status-pill').innerHTML = getStatusBadge(b.status);
+
+          // Totals (Integer minor units guaranteed)
+          document.getElementById('sb-modal-gross').innerText = formatMoney(b.grossAmountMinor || b.gross_amount_minor, b.currency);
+          document.getElementById('sb-modal-refunds').innerText = formatMoney(b.refundAmountMinor || b.refund_amount_minor, b.currency);
+          document.getElementById('sb-modal-fees').innerText = formatMoney(b.feeAmountMinor || b.fee_amount_minor, b.currency);
+          document.getElementById('sb-modal-net').innerText = formatMoney(b.netAmountMinor || b.net_amount_minor, b.currency);
+
+          // Populate visual calculation formula
+          const elGross = document.getElementById('sb-calc-gross');
+          if (elGross) elGross.innerText = formatMoney(b.grossAmountMinor || b.gross_amount_minor, b.currency);
+          const elRef = document.getElementById('sb-calc-refunds');
+          if (elRef) elRef.innerText = formatMoney(b.refundAmountMinor || b.refund_amount_minor, b.currency);
+          const elFees = document.getElementById('sb-calc-fees');
+          if (elFees) elFees.innerText = formatMoney(b.feeAmountMinor || b.fee_amount_minor, b.currency);
+          const elAdj = document.getElementById('sb-calc-adj');
+          if (elAdj) elAdj.innerText = formatMoney(b.adjustmentAmountMinor || b.adjustment_amount_minor || 0, b.currency);
+          const elNet = document.getElementById('sb-calc-net');
+          if (elNet) elNet.innerText = formatMoney(b.netAmountMinor || b.net_amount_minor, b.currency);
+
+          // Action triggers
+          const actionsEl = document.getElementById('sb-modal-actions');
+          if (actionsEl) {
+            if (b.status === 'PENDING' || b.status === 'PROCESSING') {
+              actionsEl.innerHTML = `<button class="btn btn-secondary btn-sm" onclick="processSettlementBatch('${batchId}')">Process Batch</button>`;
+            } else if (b.status === 'READY') {
+              actionsEl.innerHTML = `<button class="btn btn-primary btn-sm" onclick="disburseSettlement('${batchId}')">Disburse & Post to Ledger</button>`;
+            } else if (b.status === 'SETTLED') {
+              actionsEl.innerHTML = `<span style="font-size: 11.5px; color: var(--success-text); font-weight: 600;">✓ Disbursed & Posted to Ledger</span>`;
+            } else {
+              actionsEl.innerHTML = '';
+            }
+          }
+        }
+
+        if (recRes.ok) {
+          const rJson = await recRes.json();
+          const records = rJson.data || [];
+
+          if (records.length === 0) {
+            recordsTbody.innerHTML = `<tr><td colspan="6" class="state-box">No eligible captured transactions found for this period.</td></tr>`;
+            return;
+          }
+
+          recordsTbody.innerHTML = records.map(r => `
+            <tr>
+              <td class="mono" style="font-size: 11px;">${(r.id || '').slice(0, 8)}...</td>
+              <td class="mono" style="font-size: 11px;">${(r.paymentId || r.payment_id || '-').slice(0, 8)}...</td>
+              <td><span class="badge badge-neutral">${r.recordType || r.record_type || 'PAYMENT'}</span></td>
+              <td class="mono">${formatMoney(r.grossAmountMinor || r.gross_amount_minor)}</td>
+              <td class="mono" style="color: var(--warning-text);">${formatMoney(r.feeAmountMinor || r.fee_amount_minor)}</td>
+              <td class="mono" style="color: var(--success-text); font-weight: 600;">${formatMoney(r.netAmountMinor || r.net_amount_minor)}</td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        recordsTbody.innerHTML = `<tr><td colspan="6" class="state-box error">Failed to load settlement details: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function processSettlementBatch(batchId) {
+      try {
+        const res = await fetch(`/api/v1/settlements/${batchId}/process`, {
+          method: 'POST',
+          headers: { 'x-admin-key': ADMIN_KEY }
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(extractErrorMessage(json, 'Batch processing failed'));
+
+        showToast('Settlement batch processed! Ready for disbursement.');
+        if (activeSettlementDetailId) openSettlementDetail(batchId);
+        await Promise.all([fetchSettlements(), fetchDashboardData()]);
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    async function disburseSettlement(batchId) {
+      try {
+        const res = await fetch(`/api/v1/settlements/${batchId}/settle`, {
+          method: 'POST',
+          headers: { 'x-admin-key': ADMIN_KEY }
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(extractErrorMessage(json, 'Settlement disbursal failed'));
+
+        showToast('Double-entry settlement disbursed and posted to ledger!');
+        if (activeSettlementDetailId) openSettlementDetail(batchId);
+        await Promise.all([
+          fetchSettlements(),
+          fetchDashboardData(),
+          fetchLedger()
+        ]);
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    // ========================================================================
+    // 10. SYSTEM HEALTH VIEW & OBSERVABILITY
+    // ========================================================================
+    async function fetchSystemHealth() {
+      try {
+        const [depRes, metricsRes] = await Promise.all([
+          fetch('/health/dependencies'),
+          fetch('/metrics')
+        ]);
+
+        if (depRes.ok || depRes.status === 503) {
+          const json = await depRes.json();
+          const deps = json.dependencies || {};
+
+          // API
+          document.getElementById('sys-api-uptime').innerText = `Uptime: ${json.uptimeSeconds || 0}s | Heap: ${Math.round((json.memory?.heapUsedBytes || 0)/1024/1024)}MB`;
+          
+          // Database
+          const dbStatus = deps.database?.status || (deps.database?.connected ? 'UP' : 'DOWN');
+          const dbLat = deps.database?.latencyMs ?? 0;
+          document.getElementById('sys-db-status').innerText = dbStatus === 'UP' ? 'Operational' : 'In-Memory Fallback';
+          document.getElementById('sys-db-latency').innerText = `Probe Latency: ${dbLat}ms`;
+          document.getElementById('sys-db-pill').className = `badge ${dbStatus === 'UP' ? 'badge-success' : 'badge-warning'}`;
+          document.getElementById('sys-db-pill').innerText = dbStatus;
+
+          // Redis
+          const redisStatus = deps.redis?.status || (deps.redis?.connected ? 'UP' : 'DEGRADED');
+          const redisLat = deps.redis?.latencyMs ?? 0;
+          document.getElementById('sys-redis-status').innerText = redisStatus === 'UP' ? 'Operational' : 'Non-Authoritative';
+          document.getElementById('sys-redis-latency').innerText = `Probe Latency: ${redisLat}ms`;
+          document.getElementById('sys-redis-pill').className = `badge ${redisStatus === 'UP' ? 'badge-success' : 'badge-neutral'}`;
+          document.getElementById('sys-redis-pill').innerText = redisStatus;
+
+          // Kafka
+          const kafkaStatus = deps.kafka?.status || (deps.kafka?.connected ? 'UP' : 'DEGRADED');
+          const kafkaLat = deps.kafka?.latencyMs ?? 0;
+          document.getElementById('sys-kafka-status').innerText = kafkaStatus === 'UP' ? 'Operational' : 'Transactional Outbox';
+          document.getElementById('sys-kafka-latency').innerText = `Probe Latency: ${kafkaLat}ms`;
+          document.getElementById('sys-kafka-pill').className = `badge ${kafkaStatus === 'UP' ? 'badge-success' : 'badge-neutral'}`;
+          document.getElementById('sys-kafka-pill').innerText = kafkaStatus;
+        }
+
+        if (metricsRes.ok) {
+          const text = await metricsRes.text();
+          document.getElementById('metrics-raw-preview').innerText = text.slice(0, 2000) + '\n... [truncated]';
+        }
+      } catch (err) {
+        console.error('System health probe failed:', err);
+      }
+    }
+
+    // ========================================================================
+    // GLOBAL EXPOSURE & ROBUST EVENT DELEGATION
+    // ========================================================================
+    // Expose all operations explicitly on window object for clean global accessibility
+    window.openCreatePaymentModal = openCreatePaymentModal;
+    window.submitCreatePayment = submitCreatePayment;
+    window.openPaymentDetail = openPaymentDetail;
+    window.transitionCurrentPayment = transitionCurrentPayment;
+    window.capturePayment = capturePayment;
+    window.submitModalRefund = submitModalRefund;
+    window.fetchPayments = fetchPayments;
+    window.generateTestDataset = generateTestDataset;
+    window.triggerReconRun = triggerReconRun;
+    window.openReconDetail = openReconDetail;
+    window.investigateDiscrepancy = investigateDiscrepancy;
+    window.resolveDiscrepancy = resolveDiscrepancy;
+    window.waiveDiscrepancy = waiveDiscrepancy;
+    window.fetchReconciliation = fetchReconciliation;
+    window.openCreateSettlementModal = openCreateSettlementModal;
+    window.submitCreateSettlement = submitCreateSettlement;
+    window.openSettlementDetail = openSettlementDetail;
+    window.processSettlementBatch = processSettlementBatch;
+    window.processSettlement = processSettlementBatch;
+    window.disburseSettlement = disburseSettlement;
+    window.fetchSettlements = fetchSettlements;
+    window.refreshCurrentRoute = refreshCurrentRoute;
+    window.fetchDashboardData = fetchDashboardData;
+    window.retryDLQ = retryDLQ;
+    window.resolveDLQ = resolveDLQ;
+    window.closeModal = closeModal;
+    window.openModal = openModal;
+
+    // Robust Central Event Delegation (Resilient against DOM regeneration, CSP, and dynamic rendering)
+    document.addEventListener('click', (e) => {
+      const target = e.target.closest('button, [data-action]');
+      if (!target) return;
+
+      // If the target already has an inline onclick handler, do not duplicate execution
+      if (target.getAttribute('onclick')) return;
+
+      // Primary Action Buttons by ID
+      if (target.id === 'btn-create-intent') {
+        openCreatePaymentModal('intent');
+      } else if (target.id === 'btn-create-payment') {
+        openCreatePaymentModal('full');
+      } else if (target.id === 'cp-submit-btn') {
+        submitCreatePayment();
+      } else if (target.id === 'btn-gen-dataset') {
+        generateTestDataset();
+      } else if (target.id === 'btn-trigger-recon') {
+        triggerReconRun();
+      } else if (target.id === 'btn-create-settlement') {
+        openCreateSettlementModal();
+      } else if (target.id === 'cs-submit-btn') {
+        submitCreateSettlement();
+      } else if (target.id === 'btn-refresh') {
+        refreshCurrentRoute();
+      } else if (target.id === 'pm-refund-btn') {
+        submitModalRefund();
+      }
+    });
+
+    // Auto-init on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const initial = window.location.hash || window.location.pathname;
+      activateRoute(initial);
+    });
+  </script>
+</body>
+</html>

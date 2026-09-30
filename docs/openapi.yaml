@@ -1,0 +1,492 @@
+openapi: 3.0.3
+info:
+  title: LedgerX - Payment Infrastructure & Reconciliation API
+  description: High-integrity financial payment processing, double-entry ledger, and automated reconciliation platform.
+  version: 0.3.0
+servers:
+  - url: http://localhost:3000
+    description: Local API Gateway
+paths:
+  /health:
+    get:
+      summary: Liveness Probe
+      description: Returns 200 UP if the HTTP server process is running and accepting traffic.
+      responses:
+        '200':
+          description: Service is healthy
+
+  /ready:
+    get:
+      summary: Readiness Probe
+      description: Deep health check verifying connectivity to PostgreSQL database, memory, and internal dependencies.
+      responses:
+        '200':
+          description: All critical dependencies are connected and operational
+        '503':
+          description: One or more critical dependencies are degraded or unreachable
+
+  /api/v1/info:
+    get:
+      summary: System Metadata
+      description: Returns platform version, active milestone, supported currencies, and registered microservices.
+      responses:
+        '200':
+          description: Platform metadata
+
+  /api/v1/payments:
+    post:
+      summary: Create Payment Intent
+      description: Creates a payment in CREATED status after verifying merchant and customer validity.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - merchant_id
+                - customer_id
+                - amount_minor
+                - currency
+              properties:
+                merchant_id:
+                  type: string
+                  format: uuid
+                customer_id:
+                  type: string
+                  format: uuid
+                amount_minor:
+                  type: integer
+                  minimum: 1
+                currency:
+                  type: string
+                  minLength: 3
+                  maxLength: 3
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Payment created
+        '400':
+          description: Validation error
+        '404':
+          description: Merchant or Customer not found
+
+    get:
+      summary: List Payments
+      description: Paginated payment retrieval with status, merchant, and date range filtering.
+      parameters:
+        - in: query
+          name: merchant_id
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [CREATED, PENDING, AUTHORIZED, CAPTURED, FAILED, CANCELLED, REFUND_PENDING, REFUNDED, SETTLED]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paginated payment list
+
+  /api/v1/payments/{id}:
+    get:
+      summary: Get Payment Details
+      description: Retrieves full payment object including merchant details, customer details, and state audit history.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detailed payment object
+
+  /api/v1/payments/{id}/initiate:
+    post:
+      summary: Initiate Payment (CREATED -> PENDING)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transitioned to PENDING
+
+  /api/v1/payments/{id}/authorize:
+    post:
+      summary: Authorize Payment (PENDING -> AUTHORIZED)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transitioned to AUTHORIZED
+
+  /api/v1/payments/{id}/capture:
+    post:
+      summary: Capture Payment (AUTHORIZED -> CAPTURED & Double-Entry Posting)
+      description: Transitions payment to CAPTURED and transactionally posts balanced debit/credit ledger entries.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment captured and ledger entries recorded
+        '409':
+          description: Concurrent capture conflict
+        '422':
+          description: Invalid state transition
+
+  /api/v1/payments/{id}/cancel:
+    post:
+      summary: Cancel Payment (PENDING/AUTHORIZED -> CANCELLED)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment cancelled
+
+  /api/v1/ledger/accounts/{id}:
+    get:
+      summary: Get Account with Derived Balance
+      description: Returns account details with dynamically calculated total debits, total credits, and net balance.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Account balance summary
+        '404':
+          description: Account not found
+
+  /api/v1/ledger/accounts/{id}/entries:
+    get:
+      summary: List Account Ledger Entries
+      description: Paginated historical debit/credit entries for a specific account.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paginated entries
+
+  /api/v1/ledger/transactions:
+    get:
+      summary: List Ledger Transactions
+      description: Paginated list of double-entry transactions with filtering by reference and transaction type.
+      parameters:
+        - in: query
+          name: referenceType
+          schema:
+            type: string
+        - in: query
+          name: referenceId
+          schema:
+            type: string
+        - in: query
+          name: transactionType
+          schema:
+            type: string
+            enum: [PAYMENT, CAPTURE, REFUND, SETTLEMENT, ADJUSTMENT]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paginated transactions
+
+  /api/v1/ledger/transactions/{id}:
+    get:
+      summary: Get Ledger Transaction Details
+      description: Retrieves transaction by ID with complete debit and credit entries.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Transaction details with entries
+
+  /api/v1/ledger/integrity:
+    get:
+      summary: Ledger Integrity Invariant Audit
+      description: Audits all ledger transactions to verify 100% balance invariants, orphan entries, and reference uniqueness.
+      responses:
+        '200':
+          description: Integrity report
+
+  /health/dependencies:
+    get:
+      summary: Dependency Health Probe
+      description: Detailed latency and connectivity status for PostgreSQL, Redis, and Kafka.
+      responses:
+        '200':
+          description: All dependencies operational
+        '503':
+          description: One or more dependencies degraded
+
+  /metrics:
+    get:
+      summary: Prometheus Metrics Exposition
+      description: Returns OpenMetrics / Prometheus formatted text metrics for scraping.
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/webhooks/mockpay:
+    post:
+      summary: External Webhook Ingestion
+      description: Receives asynchronous payment provider notifications, verifies HMAC-SHA256 signature, and queues for processing.
+      parameters:
+        - in: header
+          name: x-mockpay-signature
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - event_id
+                - event_type
+                - data
+              properties:
+                event_id:
+                  type: string
+                event_type:
+                  type: string
+                data:
+                  type: object
+      responses:
+        '202':
+          description: Webhook accepted and queued
+        '401':
+          description: Invalid HMAC signature
+
+  /api/v1/webhooks/dlq:
+    get:
+      summary: List Dead-Letter Queue Events
+      description: Retrieves exhausted webhook events pending administrative review. Requires x-admin-key header.
+      security:
+        - AdminApiKey: []
+      responses:
+        '200':
+          description: List of DLQ events
+        '401':
+          description: Admin authentication required
+
+  /api/v1/webhooks/dlq/{id}/replay:
+    post:
+      summary: Replay Dead-Letter Event
+      description: Re-queues a failed DLQ event for processing.
+      security:
+        - AdminApiKey: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event replayed successfully
+
+  /api/v1/risk/evaluate:
+    post:
+      summary: Evaluate Payment Risk
+      description: Runs transparent rule-based risk evaluation against payment attributes and velocity counters.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - payment_id
+                - amount_minor
+                - currency
+              properties:
+                payment_id:
+                  type: string
+                  format: uuid
+                amount_minor:
+                  type: integer
+                currency:
+                  type: string
+      responses:
+        '200':
+          description: Risk decision (ALLOW, REVIEW, BLOCK)
+
+  /api/v1/reconciliation/run:
+    post:
+      summary: Run Financial Reconciliation
+      description: Matches internal ledger records against external provider settlement records for a given date range.
+      security:
+        - AdminApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - provider
+                - period_start
+                - period_end
+              properties:
+                provider:
+                  type: string
+                period_start:
+                  type: string
+                  format: date-time
+                period_end:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Reconciliation run report with matched counts and discrepancies
+
+  /api/v1/reconciliation/discrepancies:
+    get:
+      summary: List Reconciliation Discrepancies
+      description: Query identified discrepancy records.
+      security:
+        - AdminApiKey: []
+      responses:
+        '200':
+          description: List of discrepancies
+
+  /api/v1/settlements/batches:
+    post:
+      summary: Create Settlement Batch
+      description: Aggregates captured merchant transactions into a new pending settlement batch.
+      security:
+        - AdminApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - merchant_id
+                - period_start
+                - period_end
+              properties:
+                merchant_id:
+                  type: string
+                  format: uuid
+                period_start:
+                  type: string
+                  format: date-time
+                period_end:
+                  type: string
+                  format: date-time
+      responses:
+        '201':
+          description: Settlement batch created
+
+    get:
+      summary: List Settlement Batches
+      description: Retrieves settlement batches filtered by merchant or status.
+      responses:
+        '200':
+          description: List of settlement batches
+
+  /api/v1/settlements/batches/{id}/process:
+    post:
+      summary: Process Settlement Batch
+      description: Executes payout transaction, marks transactions as SETTLED, and posts double-entry settlement journal entries.
+      security:
+        - AdminApiKey: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Settlement batch processed successfully
+
+  /api/v1/dashboard/metrics:
+    get:
+      summary: Production Dashboard Metrics
+      description: Real-time aggregated metrics for payments, ledger volume, reconciliation health, and DLQ status.
+      responses:
+        '200':
+          description: Aggregated operational metrics
+
+components:
+  securitySchemes:
+    AdminApiKey:
+      type: apiKey
+      in: header
+      name: x-admin-key
+    IdempotencyKey:
+      type: apiKey
+      in: header
+      name: Idempotency-Key
+

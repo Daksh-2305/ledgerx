@@ -1,0 +1,241 @@
+version: "3.8"
+
+networks:
+  ledgerx-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  kafka_data:
+
+services:
+  # ==========================================
+  # Storage & Streaming Infrastructure
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: ledgerx-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ledgerx_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ledgerx_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-ledgerx_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ledgerx_user} -d ${POSTGRES_DB:-ledgerx_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ledgerx-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ledgerx-redis
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    command: sh -c "if [ -z \"$$REDIS_PASSWORD\" ]; then redis-server --appendonly yes; else redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes; fi"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "if [ -z \"$$REDIS_PASSWORD\" ]; then redis-cli ping || exit 1; else redis-cli -a \"$$REDIS_PASSWORD\" ping || exit 1; fi"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ledgerx-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: ledgerx-kafka
+    restart: unless-stopped
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ledgerx-network
+
+  # ==========================================
+  # Core Platform Services
+  # ==========================================
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ledgerx-api-gateway
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      SERVICE_NAME: api-gateway
+      DATABASE_URL: postgresql://ledgerx_user:ledgerx_secret@postgres:5432/ledgerx_db?schema=public
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKERS: kafka:29092
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ledgerx-network
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ledgerx-payment-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      SERVICE_NAME: payment-service
+      DATABASE_URL: postgresql://ledgerx_user:ledgerx_secret@postgres:5432/ledgerx_db?schema=public
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKERS: kafka:29092
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ledgerx-network
+
+  ledger-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ledgerx-ledger-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      SERVICE_NAME: ledger-service
+      DATABASE_URL: postgresql://ledgerx_user:ledgerx_secret@postgres:5432/ledgerx_db?schema=public
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKERS: kafka:29092
+    ports:
+      - "3002:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ledgerx-network
+
+  risk-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ledgerx-risk-engine
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3003
+      SERVICE_NAME: risk-engine
+      DATABASE_URL: postgresql://ledgerx_user:ledgerx_secret@postgres:5432/ledgerx_db?schema=public
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3003:3003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ledgerx-network
+
+  webhook-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ledgerx-webhook-processor
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3004
+      SERVICE_NAME: webhook-processor
+      DATABASE_URL: postgresql://ledgerx_user:ledgerx_secret@postgres:5432/ledgerx_db?schema=public
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKERS: kafka:29092
+    ports:
+      - "3004:3004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ledgerx-network
+
+  reconciliation-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ledgerx-reconciliation-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3005
+      SERVICE_NAME: reconciliation-service
+      DATABASE_URL: postgresql://ledgerx_user:ledgerx_secret@postgres:5432/ledgerx_db?schema=public
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3005:3005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ledgerx-network
+
+  settlement-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ledgerx-settlement-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3006
+      SERVICE_NAME: settlement-service
+      DATABASE_URL: postgresql://ledgerx_user:ledgerx_secret@postgres:5432/ledgerx_db?schema=public
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3006:3006"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ledgerx-network

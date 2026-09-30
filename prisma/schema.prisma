@@ -1,0 +1,604 @@
+// Prisma Schema for LedgerX - Financial Reconciliation Platform
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  ADMIN
+  MERCHANT
+  USER
+  AUDITOR
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+  CLEARING
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  PARTIALLY_REFUNDED
+  REFUND_PENDING
+  REFUNDED
+  CANCELLED
+  FAILED
+  SETTLED
+}
+
+enum PaymentAttemptStatus {
+  INITIATED
+  SUCCESSFUL
+  FAILED
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum EntryType {
+  DEBIT
+  CREDIT
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RiskDecision {
+  ALLOW
+  REVIEW
+  BLOCK
+  APPROVE
+  DECLINE
+}
+
+enum ReconciliationStatus {
+  UNMATCHED
+  MATCHED
+  AMOUNT_MISMATCH
+  STATUS_MISMATCH
+  DUPLICATE
+  RESOLVED
+}
+
+enum ReconciliationRunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+enum ReconciliationResult {
+  MATCHED
+  AMOUNT_MISMATCH
+  STATUS_MISMATCH
+  MISSING_INTERNAL
+  MISSING_EXTERNAL
+  DUPLICATE_EXTERNAL
+  DUPLICATE_INTERNAL
+  CURRENCY_MISMATCH
+}
+
+enum DiscrepancyStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  WAIVED
+}
+
+enum SettlementBatchStatus {
+  PENDING
+  PROCESSING
+  RECONCILED
+  READY
+  PROCESSING_SETTLEMENT
+  SETTLED
+  FAILED
+  CANCELLED
+}
+
+enum SettlementRecordStatus {
+  PENDING
+  INCLUDED
+  SETTLED
+  EXCLUDED
+  FAILED
+}
+
+enum WebhookEventStatus {
+  RECEIVED
+  VALIDATED
+  PROCESSING
+  PROCESSED
+  RETRY_PENDING
+  FAILED
+  DEAD_LETTERED
+}
+
+enum DeadLetterStatus {
+  PENDING
+  REPLAYED
+  RESOLVED
+  IGNORED
+}
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  name         String     @db.VarChar(255)
+  email        String     @unique @db.VarChar(255)
+  passwordHash String     @map("password_hash") @db.VarChar(255)
+  role         UserRole   @default(MERCHANT)
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  merchants    Merchant[]
+
+  @@map("users")
+}
+
+model Merchant {
+  id               String            @id @default(uuid()) @db.Uuid
+  userId           String?           @map("user_id") @db.Uuid
+  businessName     String            @map("business_name") @db.VarChar(255)
+  status           String            @default("ACTIVE") @db.VarChar(32)
+  apiKeyHash       String?           @map("api_key_hash") @db.VarChar(255)
+  webhookUrl       String?           @map("webhook_url") @db.VarChar(1024)
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  user             User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customers        Customer[]
+  payments         Payment[]
+  refunds          Refund[]
+  ledgerAccounts   LedgerAccount[]
+  settlementBatches SettlementBatch[]
+  settlementRecords SettlementRecord[]
+  webhookEvents    WebhookEvent[]
+
+  @@map("merchants")
+}
+
+model Customer {
+  id         String    @id @default(uuid()) @db.Uuid
+  merchantId String    @map("merchant_id") @db.Uuid
+  name       String    @db.VarChar(255)
+  email      String    @db.VarChar(255)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  merchant   Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  payments   Payment[]
+
+  @@map("customers")
+}
+
+model LedgerAccount {
+  id         String       @id @default(uuid()) @db.Uuid
+  merchantId String?      @map("merchant_id") @db.Uuid
+  code       String       @db.VarChar(64)
+  name       String       @db.VarChar(255)
+  type       AccountType
+  currency   String       @db.VarChar(3)
+  isActive   Boolean      @default(true) @map("is_active")
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  merchant   Merchant?    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  entries    LedgerEntry[]
+
+  @@unique([merchantId, code, currency], name: "uq_merchant_account_code_currency")
+  @@map("ledger_accounts")
+}
+
+model LedgerTransaction {
+  id              String        @id @default(uuid()) @db.Uuid
+  referenceId     String?       @map("reference_id") @db.Uuid
+  referenceType   String        @map("reference_type") @db.VarChar(64)
+  transactionType String        @default("PAYMENT") @map("transaction_type") @db.VarChar(64)
+  currency        String        @db.VarChar(3)
+  description     String?       @db.Text
+  postedAt        DateTime      @default(now()) @map("posted_at") @db.Timestamptz
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  entries         LedgerEntry[]
+
+  @@unique([referenceType, referenceId], name: "uq_ledger_transactions_reference")
+  @@index([referenceId, referenceType], name: "idx_ledger_transactions_reference")
+  @@map("ledger_transactions")
+}
+
+model LedgerEntry {
+  id            String            @id @default(uuid()) @db.Uuid
+  transactionId String            @map("transaction_id") @db.Uuid
+  accountId     String            @map("account_id") @db.Uuid
+  entryType     EntryType         @map("entry_type")
+  amountMinor   BigInt            @map("amount_minor")
+  currency      String            @db.VarChar(3)
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz
+
+  transaction   LedgerTransaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  account       LedgerAccount     @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@index([transactionId], name: "idx_ledger_entries_transaction")
+  @@index([accountId], name: "idx_ledger_entries_account")
+  @@map("ledger_entries")
+}
+
+model Payment {
+  id                  String           @id @default(uuid()) @db.Uuid
+  merchantId          String           @map("merchant_id") @db.Uuid
+  customerId          String           @map("customer_id") @db.Uuid
+  amountMinor         BigInt           @map("amount_minor")
+  currency            String           @db.VarChar(3)
+  status              PaymentStatus    @default(CREATED)
+  idempotencyKey      String?          @map("idempotency_key") @db.VarChar(255)
+  capturedAmountMinor BigInt           @default(0) @map("captured_amount_minor")
+  refundedAmountMinor BigInt           @default(0) @map("refunded_amount_minor")
+  description         String?          @db.Text
+  metadata            Json?            @default("{}")
+  createdAt           DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  merchant            Merchant         @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  customer            Customer         @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  attempts            PaymentAttempt[]
+  refunds             Refund[]
+  riskAssessments     RiskAssessment[]
+  settlementRecords   SettlementRecord[]
+  reconciliationRecords ReconciliationRecord[]
+
+  @@index([merchantId, status], name: "idx_payments_merchant_status")
+  @@index([createdAt], name: "idx_payments_created_at")
+  @@map("payments")
+}
+
+model PaymentAttempt {
+  id               String               @id @default(uuid()) @db.Uuid
+  paymentId        String               @map("payment_id") @db.Uuid
+  attemptNumber    Int                  @map("attempt_number")
+  gatewayReference String?              @map("gateway_reference") @db.VarChar(255)
+  status           PaymentAttemptStatus
+  failureReason    String?              @map("failure_reason") @db.Text
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamptz
+
+  payment          Payment              @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@unique([paymentId, attemptNumber], name: "uq_payment_attempt_number")
+  @@map("payment_attempts")
+}
+
+model Refund {
+  id             String       @id @default(uuid()) @db.Uuid
+  paymentId      String       @map("payment_id") @db.Uuid
+  merchantId     String       @map("merchant_id") @db.Uuid
+  amountMinor    BigInt       @map("amount_minor")
+  currency       String       @db.VarChar(3)
+  status         RefundStatus @default(PENDING)
+  idempotencyKey String?      @map("idempotency_key") @db.VarChar(255)
+  reason         String?      @db.Text
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  payment        Payment      @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  merchant       Merchant     @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+
+  @@index([paymentId], name: "idx_refunds_payment")
+  @@map("refunds")
+}
+
+model IdempotencyRecord {
+  id             String    @id @default(uuid()) @db.Uuid
+  key            String    @unique @db.VarChar(255)
+  merchantId     String?   @map("merchant_id") @db.Uuid
+  requestMethod  String    @map("request_method") @db.VarChar(16)
+  requestPath    String    @map("request_path") @db.VarChar(255)
+  requestHash    String    @map("request_hash") @db.VarChar(64)
+  status         String    @default("IN_PROGRESS") @db.VarChar(32) // IN_PROGRESS, COMPLETED, FAILED
+  responseStatus Int?      @map("response_status")
+  responseBody   Json?     @map("response_body")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz
+
+  @@index([key], name: "idx_idempotency_key")
+  @@index([merchantId, key], name: "idx_idempotency_merchant_key")
+  @@map("idempotency_keys")
+}
+
+model RiskAssessment {
+  id                   String       @id @default(uuid()) @db.Uuid
+  paymentId            String       @map("payment_id") @db.Uuid
+  riskScore            Int          @map("risk_score")
+  riskLevel            RiskLevel    @map("risk_level")
+  decision             RiskDecision
+  triggeredRules       Json         @default("[]") @map("triggered_rules")
+  modelVersion         String       @default("rules-v1") @map("model_version") @db.VarChar(32)
+  evaluationDurationMs Int?         @map("evaluation_duration_ms")
+  correlationId        String?      @map("correlation_id") @db.VarChar(64)
+  evaluationStatus     String       @default("COMPLETED") @map("evaluation_status") @db.VarChar(32)
+  createdAt            DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  payment              Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId], name: "idx_risk_assessments_payment")
+  @@index([decision, createdAt], name: "idx_risk_assessments_decision")
+  @@index([riskLevel, createdAt], name: "idx_risk_assessments_level")
+  @@map("risk_assessments")
+}
+
+model RiskRule {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(64)
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  parameters  Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("risk_rules")
+}
+
+model SettlementBatch {
+  id                    String                @id @default(uuid()) @db.Uuid
+  batchReference        String                @unique @map("batch_reference") @db.VarChar(128)
+  merchantId            String                @map("merchant_id") @db.Uuid
+  currency              String                @db.VarChar(3)
+  periodStart           DateTime              @map("period_start") @db.Timestamptz
+  periodEnd             DateTime              @map("period_end") @db.Timestamptz
+  grossAmountMinor      BigInt                @default(0) @map("gross_amount_minor")
+  refundAmountMinor     BigInt                @default(0) @map("refund_amount_minor")
+  adjustmentAmountMinor BigInt                @default(0) @map("adjustment_amount_minor")
+  feeAmountMinor        BigInt                @default(0) @map("fee_amount_minor")
+  netAmountMinor        BigInt                @default(0) @map("net_amount_minor")
+  status                SettlementBatchStatus @default(PENDING)
+  recordCount           Int                   @default(0) @map("record_count")
+  ledgerTransactionId   String?               @map("ledger_transaction_id") @db.Uuid
+  errorMessage          String?               @map("error_message") @db.Text
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  processingStartedAt   DateTime?             @map("processing_started_at") @db.Timestamptz
+  completedAt           DateTime?             @map("completed_at") @db.Timestamptz
+  updatedAt             DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+
+  merchant              Merchant              @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+  records               SettlementRecord[]
+
+  @@unique([merchantId, currency, periodStart, periodEnd], name: "uq_settlement_merchant_period")
+  @@index([merchantId, status], name: "idx_settlement_batches_merchant_status")
+  @@index([status, createdAt], name: "idx_settlement_batches_status")
+  @@map("settlement_batches")
+}
+
+model SettlementRecord {
+  id                  String                 @id @default(uuid()) @db.Uuid
+  batchId             String                 @map("batch_id") @db.Uuid
+  paymentId           String                 @map("payment_id") @db.Uuid
+  ledgerTransactionId String?                @map("ledger_transaction_id") @db.Uuid
+  merchantId          String                 @map("merchant_id") @db.Uuid
+  grossAmountMinor    BigInt                 @map("gross_amount_minor")
+  refundAmountMinor   BigInt                 @default(0) @map("refund_amount_minor")
+  feeAmountMinor      BigInt                 @default(0) @map("fee_amount_minor")
+  netAmountMinor      BigInt                 @map("net_amount_minor")
+  currency            String                 @db.VarChar(3)
+  status              SettlementRecordStatus @default(PENDING)
+  errorMessage        String?                @map("error_message") @db.Text
+  createdAt           DateTime               @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime               @updatedAt @map("updated_at") @db.Timestamptz
+
+  batch               SettlementBatch        @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  payment             Payment                @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  merchant            Merchant               @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+
+  @@index([batchId, status], name: "idx_settlement_records_batch_status")
+  @@index([paymentId], name: "idx_settlement_records_payment")
+  @@index([merchantId], name: "idx_settlement_records_merchant")
+  @@map("settlement_records")
+}
+
+model ExternalTransaction {
+  id                    String                 @id @default(uuid()) @db.Uuid
+  provider              String                 @db.VarChar(64)
+  externalTransactionId String                 @map("external_transaction_id") @db.VarChar(128)
+  externalReference     String                 @map("external_reference") @db.VarChar(255)
+  paymentReference      String?                @map("payment_reference") @db.VarChar(255)
+  transactionType       String                 @default("PAYMENT") @map("transaction_type") @db.VarChar(64)
+  amountMinor           BigInt                 @map("amount_minor")
+  currency              String                 @db.VarChar(3)
+  status                String                 @db.VarChar(64)
+  transactionTimestamp  DateTime               @map("transaction_timestamp") @db.Timestamptz
+  settlementDate        DateTime?              @map("settlement_date") @db.Timestamptz
+  rawData               Json?                  @default("{}") @map("raw_data")
+  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz
+
+  reconciliationRecords ReconciliationRecord[]
+
+  @@unique([provider, externalTransactionId], name: "uq_external_transactions_provider_id")
+  @@index([provider, transactionTimestamp], name: "idx_external_tx_provider_time")
+  @@index([externalReference], name: "idx_external_tx_ext_ref")
+  @@index([paymentReference], name: "idx_external_tx_pay_ref")
+  @@map("external_transactions")
+}
+
+model ReconciliationRun {
+  id                   String                  @id @default(uuid()) @db.Uuid
+  runReference         String                  @unique @map("run_reference") @db.VarChar(128)
+  provider             String                  @default("mockpay") @db.VarChar(64)
+  periodStart          DateTime                @map("period_start") @db.Timestamptz
+  periodEnd            DateTime                @map("period_end") @db.Timestamptz
+  status               ReconciliationRunStatus @default(PENDING)
+  totalInternalRecords Int                     @default(0) @map("total_internal_records")
+  totalExternalRecords Int                     @default(0) @map("total_external_records")
+  matchedCount         Int                     @default(0) @map("matched_count")
+  mismatchCount        Int                     @default(0) @map("mismatch_count")
+  missingInternalCount Int                     @default(0) @map("missing_internal_count")
+  missingExternalCount Int                     @default(0) @map("missing_external_count")
+  duplicateCount       Int                     @default(0) @map("duplicate_count")
+  startedAt            DateTime?               @map("started_at") @db.Timestamptz
+  completedAt          DateTime?               @map("completed_at") @db.Timestamptz
+  errorMessage         String?                 @map("error_message") @db.Text
+  createdAt            DateTime                @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime                @updatedAt @map("updated_at") @db.Timestamptz
+
+  records              ReconciliationRecord[]
+
+  @@index([provider, createdAt], name: "idx_reconciliation_runs_provider")
+  @@index([status, createdAt], name: "idx_reconciliation_runs_status")
+  @@map("reconciliation_runs")
+}
+
+model ReconciliationRecord {
+  id                    String                @id @default(uuid()) @db.Uuid
+  runId                 String                @map("run_id") @db.Uuid
+  internalReference     String?               @map("internal_reference") @db.VarChar(255)
+  externalReference     String?               @map("external_reference") @db.VarChar(255)
+  internalTransactionId String?               @map("internal_transaction_id") @db.Uuid
+  externalTransactionId String?               @map("external_transaction_id") @db.VarChar(128)
+  externalDbRecordId    String?               @map("external_db_record_id") @db.Uuid
+  result                ReconciliationResult
+  differenceMinor       BigInt                @default(0) @map("difference_minor")
+  reason                String?               @db.Text
+  status                DiscrepancyStatus     @default(OPEN)
+  resolvedBy            String?               @map("resolved_by") @db.VarChar(128)
+  resolvedAt            DateTime?             @map("resolved_at") @db.Timestamptz
+  resolutionNotes       String?               @map("resolution_notes") @db.Text
+  internalAmountMinor   BigInt?               @map("internal_amount_minor")
+  externalAmountMinor   BigInt?               @map("external_amount_minor")
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+
+  run                   ReconciliationRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
+  payment               Payment?              @relation(fields: [internalTransactionId], references: [id], onDelete: SetNull)
+  externalRecord        ExternalTransaction?  @relation(fields: [externalDbRecordId], references: [id], onDelete: SetNull)
+
+  @@index([runId, result], name: "idx_recon_records_run_result")
+  @@index([status], name: "idx_recon_records_status")
+  @@index([internalReference], name: "idx_recon_records_internal_ref")
+  @@index([externalReference], name: "idx_recon_records_external_ref")
+  @@map("reconciliation_records")
+}
+
+model WebhookEvent {
+  id                String             @id @default(uuid()) @db.Uuid
+  eventId           String             @map("event_id") @db.VarChar(128)
+  provider          String             @default("mockpay") @db.VarChar(64)
+  eventType         String             @map("event_type") @db.VarChar(64)
+  externalReference String?            @map("external_reference") @db.VarChar(255)
+  merchantId        String?            @map("merchant_id") @db.Uuid
+  signature         String?            @db.VarChar(512)
+  payload           Json
+  status            WebhookEventStatus @default(RECEIVED)
+  attempts          Int                @default(0)
+  maxAttempts       Int                @default(5) @map("max_attempts")
+  lastError         String?            @map("last_error") @db.Text
+  receivedAt        DateTime           @default(now()) @map("received_at") @db.Timestamptz
+  processedAt       DateTime?          @map("processed_at") @db.Timestamptz
+  nextRetryAt       DateTime?          @map("next_retry_at") @db.Timestamptz
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  merchant          Merchant?          @relation(fields: [merchantId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, eventId], name: "uq_webhook_events_provider_event")
+  @@index([status, nextRetryAt], name: "idx_webhook_events_queue")
+  @@map("webhook_events")
+}
+
+model DeadLetterEvent {
+  id              String           @id @default(uuid()) @db.Uuid
+  eventId         String           @map("event_id") @db.VarChar(128)
+  source          String           @db.VarChar(64)
+  eventType       String           @map("event_type") @db.VarChar(64)
+  payload         Json
+  reason          String           @db.Text
+  attempts        Int              @default(0)
+  status          DeadLetterStatus @default(PENDING)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  resolvedAt      DateTime?        @map("resolved_at") @db.Timestamptz
+  resolvedBy      String?          @map("resolved_by") @db.VarChar(128)
+  resolutionNotes String?          @map("resolution_notes") @db.Text
+
+  @@index([status, createdAt], name: "idx_dead_letter_events_status")
+  @@index([eventId], name: "idx_dead_letter_events_event_id")
+  @@map("dead_letter_events")
+}
+
+model AuditLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  entityType    String   @map("entity_type") @db.VarChar(64)
+  entityId      String   @map("entity_id") @db.VarChar(64)
+  action        String   @db.VarChar(64)
+  actorId       String?  @map("actor_id") @db.VarChar(64)
+  actorType     String   @default("USER") @map("actor_type") @db.VarChar(32)
+  changes       Json?
+  ipAddress     String?  @map("ip_address") @db.VarChar(45)
+  correlationId String?  @map("correlation_id") @db.VarChar(64)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([entityType, entityId], name: "idx_audit_logs_entity")
+  @@index([correlationId], name: "idx_audit_logs_correlation")
+  @@map("audit_logs")
+}
+
+// ==========================================
+// 10. TRANSACTIONAL OUTBOX & EVENT STREAMING (Milestone 6)
+// ==========================================
+enum OutboxStatus {
+  PENDING
+  PUBLISHED
+  FAILED
+}
+
+model OutboxEvent {
+  id            String       @id @default(uuid()) @db.Uuid
+  eventId       String       @unique @map("event_id") @db.VarChar(64)
+  eventType     String       @map("event_type") @db.VarChar(64)
+  aggregateType String       @map("aggregate_type") @db.VarChar(64)
+  aggregateId   String       @map("aggregate_id") @db.VarChar(64)
+  payload       Json
+  topic         String       @db.VarChar(128)
+  partitionKey  String       @map("partition_key") @db.VarChar(128)
+  correlationId String?      @map("correlation_id") @db.VarChar(64)
+  status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0)
+  maxAttempts   Int          @default(5) @map("max_attempts")
+  lastError     String?      @map("last_error") @db.Text
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  publishedAt   DateTime?    @map("published_at") @db.Timestamptz
+
+  @@index([status, createdAt], name: "idx_outbox_events_queue")
+  @@index([aggregateType, aggregateId], name: "idx_outbox_events_aggregate")
+  @@map("outbox_events")
+}
+
+model ProcessedEvent {
+  id            String    @id @default(uuid()) @db.Uuid
+  eventId       String    @map("event_id") @db.VarChar(64)
+  consumerGroup String    @map("consumer_group") @db.VarChar(128)
+  eventType     String    @map("event_type") @db.VarChar(64)
+  processedAt   DateTime  @default(now()) @map("processed_at") @db.Timestamptz
+
+  @@unique([eventId, consumerGroup], name: "uq_processed_events_event_group")
+  @@index([consumerGroup, processedAt], name: "idx_processed_events_group")
+  @@map("processed_events")
+}
+

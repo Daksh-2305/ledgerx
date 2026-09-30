@@ -1,0 +1,138 @@
+version: "3.8"
+
+networks:
+  ledgerx-prod-network:
+    driver: bridge
+
+volumes:
+  postgres_prod_data:
+  redis_prod_data:
+  kafka_prod_data:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ledgerx-postgres-prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ledgerx_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ledgerx_prod_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-ledgerx_db}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ledgerx_user} -d ${POSTGRES_DB:-ledgerx_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+    networks:
+      - ledgerx-prod-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ledgerx-redis-prod
+    restart: always
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_prod_secret_min16}
+    command: sh -c "redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes"
+    volumes:
+      - redis_prod_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+    networks:
+      - ledgerx-prod-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: ledgerx-kafka-prod
+    restart: always
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    volumes:
+      - kafka_prod_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server kafka:9092 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+    networks:
+      - ledgerx-prod-network
+
+  ledgerx-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ledgerx-app-prod
+    restart: always
+    stop_signal: SIGTERM
+    stop_grace_period: 15s
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      SERVICE_NAME: ledgerx-core
+      LOG_LEVEL: info
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ledgerx_user}:${POSTGRES_PASSWORD:-ledgerx_prod_secret}@postgres:5432/${POSTGRES_DB:-ledgerx_db}?schema=public
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_prod_secret_min16}@redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_prod_secret_min16}
+      KAFKA_BROKERS: kafka:9092
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-whsec_production_secret_32characters_min}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-admin_prod_secret_key_32chars_min_length}
+      JWT_SECRET: ${JWT_SECRET:-jwt_prod_secret_key_32chars_minimum_length}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://dashboard.ledgerx.com}
+      SHUTDOWN_TIMEOUT_MS: 10000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1024M
+    networks:
+      - ledgerx-prod-network

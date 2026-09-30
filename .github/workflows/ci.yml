@@ -1,0 +1,73 @@
+name: LedgerX CI Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  validate-and-test:
+    name: Lint, Test & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ledgerx_user
+          POSTGRES_PASSWORD: ledgerx_secret
+          POSTGRES_DB: ledgerx_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Prisma Schema
+        run: npx prisma validate
+
+      - name: Generate Prisma Client
+        run: npm run db:generate
+
+      - name: Run Typecheck & Lint
+        run: npm run lint
+
+      - name: Run Full Test Suite (Unit, Integration & E2E)
+        env:
+          DATABASE_URL: postgresql://ledgerx_user:ledgerx_secret@localhost:5432/ledgerx_db?schema=public
+          REDIS_URL: redis://localhost:6379
+          NODE_ENV: test
+        run: npm test
+
+      - name: Build Production TypeScript Bundle
+        run: npm run build
+
+      - name: Verify Public Dashboard Assets
+        run: test -f public/index.html
