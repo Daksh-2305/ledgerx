@@ -37,6 +37,12 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+    env:
+      DATABASE_URL: postgresql://ledgerx_user:ledgerx_secret@localhost:5432/ledgerx_db?schema=public
+      REDIS_URL: redis://localhost:6379
+      NODE_ENV: test
+      JWT_SECRET: ci_test_jwt_secret_min32chars_for_ci_pipeline
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -56,14 +62,13 @@ jobs:
       - name: Generate Prisma Client
         run: npm run db:generate
 
+      - name: Run Prisma Migrations
+        run: npx prisma migrate deploy
+
       - name: Run Typecheck & Lint
         run: npm run lint
 
       - name: Run Full Test Suite (Unit, Integration & E2E)
-        env:
-          DATABASE_URL: postgresql://ledgerx_user:ledgerx_secret@localhost:5432/ledgerx_db?schema=public
-          REDIS_URL: redis://localhost:6379
-          NODE_ENV: test
         run: npm test
 
       - name: Build Production TypeScript Bundle
