@@ -25,6 +25,15 @@ export async function createLedgerContainer(
     return { repository: customRepository, service, controller };
   }
 
+  if (process.env.NODE_ENV === 'test') {
+    logger.info('Initializing In-Memory Ledger Repository for test environment');
+    const inMem = new InMemoryLedgerRepository();
+    await seedDemoLedgerAccounts(inMem);
+    const service = new LedgerService(inMem);
+    const controller = new LedgerController(service);
+    return { repository: inMem, service, controller };
+  }
+
   const dbHealth = await checkDatabaseHealth();
   let repository: ILedgerRepository;
 

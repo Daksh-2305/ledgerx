@@ -86,8 +86,11 @@ describe('Milestone 10 & 11 — Complete End-to-End Financial Lifecycle (Section
     // 6. Settlements
     settlementRepo = new InMemorySettlementRepository();
     settlementService = new SettlementService(settlementRepo, ledgerService);
-    const settlementContainer = await createSettlementContainer({ repository: settlementRepo });
-    (settlementContainer as any).service = settlementService;
+    const settlementContainer = await createSettlementContainer({
+      repository: settlementRepo,
+      ledgerService,
+      service: settlementService,
+    });
     setSettlementContainer(settlementContainer);
 
     app = createServer();

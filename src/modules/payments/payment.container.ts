@@ -31,6 +31,15 @@ export async function createPaymentContainer(
     return { repository: customRepository, service, controller };
   }
 
+  if (process.env.NODE_ENV === 'test') {
+    logger.info('Initializing In-Memory Payment Repository for test environment');
+    const inMem = new InMemoryPaymentRepository();
+    await seedDemoData(inMem);
+    const service = new PaymentService(inMem, ledgerService);
+    const controller = new PaymentController(service);
+    return { repository: inMem, service, controller };
+  }
+
   // Detect if live database is reachable
   const dbHealth = await checkDatabaseHealth();
   let repository: IPaymentRepository;

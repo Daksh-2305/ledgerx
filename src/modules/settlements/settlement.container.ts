@@ -15,6 +15,8 @@ import { getPaymentContainer } from '../payments/payment.container.js';
 import { getKafkaProducerService } from '../../infra/kafka/kafka-producer.js';
 import { getRedisCacheService } from '../../infra/redis/redis-cache.service.js';
 
+import type { LedgerService } from '../ledger/ledger.service.js';
+
 export interface SettlementModuleContainer {
   repository: ISettlementRepository;
   service: SettlementService;
@@ -27,6 +29,8 @@ let activeContainer: SettlementModuleContainer | null = null;
 
 export async function createSettlementContainer(options?: {
   repository?: ISettlementRepository;
+  ledgerService?: LedgerService;
+  service?: SettlementService;
 }): Promise<SettlementModuleContainer> {
   let repository = options?.repository;
 
@@ -55,13 +59,13 @@ export async function createSettlementContainer(options?: {
     }
   }
 
-  const ledgerContainer = await getLedgerContainer();
+  const ledgerService = options?.ledgerService || (await getLedgerContainer()).service;
   const kafkaProducer = getKafkaProducerService();
   const cacheService = getRedisCacheService();
 
-  const service = new SettlementService(
+  const service = options?.service || new SettlementService(
     repository,
-    ledgerContainer.service,
+    ledgerService,
     kafkaProducer,
     cacheService
   );

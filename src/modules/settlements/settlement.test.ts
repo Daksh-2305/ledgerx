@@ -19,6 +19,11 @@ import {
 import { InMemoryLedgerRepository } from '../ledger/ledger.repository.js';
 import { LedgerService } from '../ledger/ledger.service.js';
 import {
+  createLedgerContainer,
+  setLedgerContainer,
+  resetLedgerContainer,
+} from '../ledger/ledger.container.js';
+import {
   ConflictError,
   FinancialInvarianceError,
 } from '../../common/errors.js';
@@ -37,19 +42,27 @@ describe('Milestone 10 — Settlement & Settlement Batches', () => {
   const periodEnd = '2026-09-30T23:59:59.999Z';
 
   beforeEach(async () => {
+    // Reset ALL containers to ensure test isolation in CI where PostgreSQL is available
+    resetLedgerContainer();
     resetSettlementContainer();
+
     settlementRepo = new InMemorySettlementRepository();
     ledgerRepo = new InMemoryLedgerRepository();
     ledgerService = new LedgerService(ledgerRepo);
+
+    const ledgerContainer = await createLedgerContainer(ledgerRepo);
+    setLedgerContainer(ledgerContainer);
 
     settlementService = new SettlementService(
       settlementRepo,
       ledgerService
     );
 
-    const container = await createSettlementContainer({ repository: settlementRepo });
-    // Override service in container to connect with our test ledgerService
-    (container as any).service = settlementService;
+    const container = await createSettlementContainer({
+      repository: settlementRepo,
+      ledgerService,
+      service: settlementService,
+    });
     setSettlementContainer(container);
 
     app = createServer();
